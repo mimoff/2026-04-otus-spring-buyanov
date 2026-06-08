@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.otus.hw.models.Book;
@@ -18,6 +19,10 @@ import java.util.Optional;
 @Repository
 @RequiredArgsConstructor
 public class JdbcBookRepository implements BookRepository {
+
+    private final NamedParameterJdbcOperations jdbc;
+
+    private final AuthorRepository authorRepository;
 
     private final GenreRepository genreRepository;
 
@@ -94,7 +99,10 @@ public class JdbcBookRepository implements BookRepository {
 
         @Override
         public Book mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return null;
+            long id = rs.getLong("id");
+            String title = rs.getString("title");
+            long authorId = rs.getLong("author_id");
+            return new Book(id, title, authorRepository.findById(authorId).get());
         }
     }
 
