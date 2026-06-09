@@ -7,8 +7,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.otus.hw.config.TestFileNameProvider;
+import ru.otus.hw.exceptions.QuestionReadException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 import static ru.otus.hw.TestUtils.getExpectedQuestions;
 
@@ -23,6 +25,12 @@ class CsvQuestionDaoTest {
     @BeforeEach
     void setUp() {
         when(fileNameProvider.getTestFileName()).thenReturn("questionsTest.csv");
+    }
+
+    @Test
+    void shouldThrowQuestionReadExceptionIfResourceNotExists() {
+        when(fileNameProvider.getTestFileName()).thenReturn("nonexistentFile.csv");
+        assertThatThrownBy(() -> csvQuestionDao.findAll()).isInstanceOf(QuestionReadException.class);
     }
 
     @Test

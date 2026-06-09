@@ -59,9 +59,9 @@ class TestServiceImplTest {
     private List<String> getExpectedPrintFormattedLines() {
         var expectedPrintFormattedLines = new ArrayList<String>();
         expectedPrintFormattedLines.add("Please answer the questions below%n");
-        expectedPrintFormattedLines.add("    Answer1 [true]");
-        expectedPrintFormattedLines.add("    Answer2 [false]");
-        expectedPrintFormattedLines.add("    Answer3 [false]");
+        expectedPrintFormattedLines.add("  1. Answer1");
+        expectedPrintFormattedLines.add("  2. Answer2");
+        expectedPrintFormattedLines.add("  3. Answer3");
         return expectedPrintFormattedLines;
     }
 }
