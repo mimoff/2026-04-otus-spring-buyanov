@@ -25,8 +25,6 @@ public class JdbcBookRepository implements BookRepository {
 
     private final NamedParameterJdbcOperations jdbc;
 
-    private final AuthorRepository authorRepository;
-
     private final GenreRepository genreRepository;
 
     @Override
@@ -75,7 +73,12 @@ public class JdbcBookRepository implements BookRepository {
     }
 
     private List<Book> getAllBooksWithoutGenres() {
-        return jdbc.query("select id, title, author_id from books", new BookRowMapper());
+        String sql = """
+				select books.id as book_id, books.title,
+				books.author_id, authors.full_name
+				from books
+				left join authors on authors.id = books.author_id""";
+        return jdbc.query(sql, new BookRowMapper());
     }
 
     private List<BookGenreRelation> getAllGenreRelations() {
@@ -152,14 +155,15 @@ public class JdbcBookRepository implements BookRepository {
         jdbc.update("delete books_genres where book_id = :id", parameters);
     }
 
-    private class BookRowMapper implements RowMapper<Book> {
+    private static class BookRowMapper implements RowMapper<Book> {
 
         @Override
         public Book mapRow(ResultSet rs, int rowNum) throws SQLException {
-            long id = rs.getLong("id");
+            long id = rs.getLong("book_id");
             String title = rs.getString("title");
             long authorId = rs.getLong("author_id");
-            return new Book(id, title, authorRepository.findById(authorId).get(), new ArrayList<>());
+            String fullName = rs.getString("full_name");
+            return new Book(id, title, new Author(authorId, fullName), new ArrayList<>());
         }
     }
 
