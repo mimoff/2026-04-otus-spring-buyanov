@@ -1,10 +1,12 @@
 package ru.otus.hw.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import ru.otus.hw.dao.QuestionDao;
 import ru.otus.hw.domain.Student;
 import ru.otus.hw.domain.TestResult;
 
+@Service
 @RequiredArgsConstructor
 public class TestServiceImpl implements TestService {
 
@@ -20,7 +22,14 @@ public class TestServiceImpl implements TestService {
         var testResult = new TestResult(student);
 
         for (var question: questions) {
-            var isAnswerValid = false; // Задать вопрос, получить ответ
+            ioService.printLine(question.text());
+            for (int i = 0; i < question.answers().size(); i++) {
+                ioService.printFormattedLine(String.format("  %d. %s", i + 1, question.answers().get(i).text()));
+            }
+            ioService.printLine("");
+            var answerNum = ioService.readIntForRangeWithPrompt(1, question.answers().size(),
+                    "Enter your answer:", "Answer out of range. Please, try again:");
+            var isAnswerValid = question.answers().get(answerNum - 1).isCorrect();
             testResult.applyAnswer(question, isAnswerValid);
         }
         return testResult;
