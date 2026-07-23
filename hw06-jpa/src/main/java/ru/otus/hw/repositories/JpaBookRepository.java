@@ -1,5 +1,6 @@
 package ru.otus.hw.repositories;
 
+import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
@@ -9,6 +10,8 @@ import ru.otus.hw.models.Book;
 
 import java.util.List;
 import java.util.Optional;
+
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH;
 
 @Repository
 public class JpaBookRepository implements BookRepository {
@@ -22,10 +25,12 @@ public class JpaBookRepository implements BookRepository {
     @Override
     public Optional<Book> findById(long id) {
         try {
-            TypedQuery<Book> query = em.createQuery("select distinct b from Book b " +
-                    "left join fetch b.author a " +
-                    "left join fetch b.genres g where b.id = :id", Book.class);
+            EntityGraph<?> entityGraphAuthor = em.getEntityGraph("book-author-entity-graph");
+            EntityGraph<?> entityGraphGenres = em.getEntityGraph("book-genres-entity-graph");
+            TypedQuery<Book> query = em.createQuery("select distinct b from Book b where b.id = :id", Book.class);
             query.setParameter("id", id);
+            query.setHint(FETCH.getKey(), entityGraphAuthor);
+            query.setHint(FETCH.getKey(), entityGraphGenres);
             return Optional.ofNullable(query.getSingleResult());
         } catch (NoResultException e) {
             return Optional.empty();
@@ -34,9 +39,11 @@ public class JpaBookRepository implements BookRepository {
 
     @Override
     public List<Book> findAll() {
-        TypedQuery<Book> query = em.createQuery("select distinct b from Book b " +
-                "left join fetch b.author a " +
-                "left join fetch b.genres g ", Book.class);
+        EntityGraph<?> entityGraphAuthor = em.getEntityGraph("book-author-entity-graph");
+        EntityGraph<?> entityGraphGenres = em.getEntityGraph("book-genres-entity-graph");
+        TypedQuery<Book> query = em.createQuery("select distinct b from Book b ", Book.class);
+        query.setHint(FETCH.getKey(), entityGraphAuthor);
+        query.setHint(FETCH.getKey(), entityGraphGenres);
         return query.getResultList();
     }
 
