@@ -1,12 +1,11 @@
 package ru.otus.hw.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class TestRunnerServiceImpl implements CommandLineRunner {
+public class TestRunnerServiceImpl implements TestRunnerService {
 
     private final TestService testService;
 
@@ -14,8 +13,7 @@ public class TestRunnerServiceImpl implements CommandLineRunner {
 
     private final ResultService resultService;
 
-    @Override
-    public void run(String... args) throws Exception {
+    public void run() {
         var student = studentService.determineCurrentStudent();
         var testResult = testService.executeTestFor(student);
         resultService.showResult(testResult);
