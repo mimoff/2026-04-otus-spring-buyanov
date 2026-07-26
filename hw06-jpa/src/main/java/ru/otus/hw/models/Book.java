@@ -31,7 +31,8 @@ import java.util.List;
 @Table(name = "books")
 @Entity
 @NamedEntityGraph(name = "book-author-entity-graph", attributeNodes = {@NamedAttributeNode("author")})
-@NamedEntityGraph(name = "book-genres-entity-graph", attributeNodes = {@NamedAttributeNode("genres")})
+@NamedEntityGraph(name = "book-author-genres-entity-graph",
+        attributeNodes = {@NamedAttributeNode("author"), @NamedAttributeNode("genres")})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Book {
     @Id
