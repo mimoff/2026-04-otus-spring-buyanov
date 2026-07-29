@@ -89,16 +89,22 @@ class JpaCommentRepositoryTest {
         assertThat(repositoryJpa.findById(expectedComment.getId()))
                 .isPresent()
                 .get()
+                .usingRecursiveComparison()
+                .ignoringExpectedNullFields()
                 .isNotEqualTo(expectedComment);
 
         var returnedComment = repositoryJpa.save(expectedComment);
         assertThat(returnedComment).isNotNull()
                 .matches(comment -> comment.getId() > 0)
-                .usingRecursiveComparison().ignoringExpectedNullFields().isEqualTo(expectedComment);
+                .usingRecursiveComparison()
+                .ignoringExpectedNullFields()
+                .isEqualTo(expectedComment);
 
         assertThat(repositoryJpa.findById(returnedComment.getId()))
                 .isPresent()
                 .get()
+                .usingRecursiveComparison()
+                .ignoringExpectedNullFields()
                 .isEqualTo(returnedComment);
     }
 
