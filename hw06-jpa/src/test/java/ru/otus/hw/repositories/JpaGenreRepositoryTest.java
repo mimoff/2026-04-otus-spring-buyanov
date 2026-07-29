@@ -6,8 +6,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import ru.otus.hw.models.Genre;
 
 import java.util.List;
@@ -17,13 +19,14 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("Репозиторий на основе Jdbc для работы жанрами")
-@JdbcTest
-@Import({JdbcGenreRepository.class})
-class JdbcGenreRepositoryTest {
+@DisplayName("Репозиторий на основе Jpa для работы жанрами")
+@DataJpaTest
+@Import({JpaGenreRepository.class})
+@Transactional(propagation = Propagation.NEVER)
+class JpaGenreRepositoryTest {
 
     @Autowired
-    private JdbcGenreRepository repositoryJdbc;
+    private JpaGenreRepository repositoryJpa;
 
     private List<Genre> dbGenres;
 
@@ -35,7 +38,7 @@ class JdbcGenreRepositoryTest {
     @DisplayName("должен загружать список всех жанров")
     @Test
     void shouldReturnCorrectGenresList() {
-        var actualGenres = repositoryJdbc.findAll();
+        var actualGenres = repositoryJpa.findAll();
         var expectedGenres = dbGenres;
 
         assertThat(actualGenres).containsExactlyElementsOf(expectedGenres);
@@ -48,7 +51,7 @@ class JdbcGenreRepositoryTest {
         var setOfIds = dbGenres.stream()
                 .map(Genre::getId)
                 .collect(Collectors.toSet());
-        var actualGenres = repositoryJdbc.findAllByIds(setOfIds);
+        var actualGenres = repositoryJpa.findAllByIds(setOfIds);
         var expectedGenres = dbGenres;
 
         assertThat(actualGenres).containsExactlyElementsOf(expectedGenres);
@@ -60,7 +63,7 @@ class JdbcGenreRepositoryTest {
     @MethodSource("getDbGenres")
     void shouldReturnCorrectGenreById(Genre expectedGenre) {
         var setOfIds = Set.of(expectedGenre.getId());
-        var actualGenres = repositoryJdbc.findAllByIds(setOfIds);
+        var actualGenres = repositoryJpa.findAllByIds(setOfIds);
         var expectedGenres = List.of(expectedGenre);
 
         assertThat(actualGenres).containsExactlyElementsOf(expectedGenres);
