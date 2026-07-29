@@ -23,7 +23,7 @@ public class CommentServiceImpl implements CommentService {
     public Optional<Comment> findById(long id) {
         var comment = commentRepository.findById(id);
 
-        if(!comment.isEmpty()) {
+        if (!comment.isEmpty()) {
             comment.get().getBook().getAuthor().getFullName();
             comment.get().getBook().getGenres().size();
         }
