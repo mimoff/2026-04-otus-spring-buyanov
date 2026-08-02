@@ -2,19 +2,21 @@ package ru.otus.hw.services;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import ru.otus.hw.TestUtils;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.models.Genre;
-import ru.otus.hw.repositories.JpaAuthorRepository;
-import ru.otus.hw.repositories.JpaBookRepository;
-import ru.otus.hw.repositories.JpaGenreRepository;
 
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -22,21 +24,23 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 @DisplayName("Сервис для работы с книгами ")
 @DataJpaTest
 @Transactional(propagation = Propagation.NEVER)
-@Import({BookServiceImpl.class, JpaBookRepository.class, JpaAuthorRepository.class, JpaGenreRepository.class})
+@Import({BookServiceImpl.class})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class BookServiceImplTest {
 
     @Autowired
     private BookService bookService;
 
     @DisplayName("должен загружать книгу по id и позволять использовать связи вне транзакции сервиса")
-    @Test
-    void shouldReturnBookByIdAndAllowRelationsAccessOutsideServiceTransaction() {
-        var actualBook = bookService.findById(1L);
+    @ParameterizedTest
+    @MethodSource("ru.otus.hw.TestUtils#getDbBooks")
+    void shouldReturnBookByIdAndAllowRelationsAccessOutsideServiceTransaction(Book expectedBook) {
+        var actualBook = bookService.findById(expectedBook.getId());
 
         assertThat(actualBook).isPresent()
                 .get()
-                .matches(book -> book.getId() == 1L)
-                .matches(book -> book.getTitle().equals("BookTitle_1"));
+                .usingRecursiveComparison()
+                .isEqualTo(expectedBook);
 
         assertThatCode(() -> {
             var book = actualBook.orElseThrow();
@@ -49,10 +53,9 @@ class BookServiceImplTest {
     @Test
     void shouldReturnAllBooksAndAllowRelationsAccessOutsideServiceTransaction() {
         var actualBooks = bookService.findAll();
+        var expectedBooks = TestUtils.getDbBooks();
 
-        assertThat(actualBooks).isNotEmpty()
-                .extracting(Book::getId)
-                .contains(1L, 2L, 3L);
+        assertThat(actualBooks).containsExactlyElementsOf(expectedBooks);
 
         assertThatCode(() -> actualBooks.forEach(book -> {
             book.getAuthor().getFullName();
@@ -63,11 +66,17 @@ class BookServiceImplTest {
     @DisplayName("должен сохранять новую книгу и позволять использовать ее связи вне транзакции сервиса")
     @Test
     void shouldInsertBookAndAllowRelationsAccessOutsideServiceTransaction() {
-        var actualBook = bookService.insert("BookTitle_10500", 1L, Set.of(1L, 3L));
+        var expectedBook = new Book(0, "BookTitle_10500", TestUtils.getDbAuthors().get(0),
+                List.of(TestUtils.getDbGenres().get(0), TestUtils.getDbGenres().get(2)));
+        var expectedGenres = expectedBook.getGenres().stream()
+                .map(Genre::getId).collect(Collectors.toSet());
+        var actualBook = bookService.insert(expectedBook.getTitle(), expectedBook.getAuthor().getId(), expectedGenres);
 
         assertThat(actualBook).isNotNull()
                 .matches(book -> book.getId() > 0)
-                .matches(book -> book.getTitle().equals("BookTitle_10500"));
+                .usingRecursiveComparison()
+                .ignoringFields("id")
+                .isEqualTo(expectedBook);
 
         assertThatCode(() -> {
             actualBook.getAuthor().getFullName();
@@ -80,22 +89,31 @@ class BookServiceImplTest {
     @DisplayName("должен обновлять книгу и позволять использовать ее связи вне транзакции сервиса")
     @Test
     void shouldUpdateBookAndAllowRelationsAccessOutsideServiceTransaction() {
-        var createdBook = bookService.insert("BookTitle_ToUpdate", 1L, Set.of(1L, 2L));
-        var actualBook = bookService.update(createdBook.getId(), "BookTitle_Updated", 3L, Set.of(5L, 6L));
+        var expectedBook = new Book(1L, "BookTitle_Updated", TestUtils.getDbAuthors().get(2),
+                List.of(TestUtils.getDbGenres().get(4), TestUtils.getDbGenres().get(5)));
+        var expectedGenres = expectedBook.getGenres().stream()
+                .map(Genre::getId).collect(Collectors.toSet());
 
-        assertThat(actualBook).isNotNull()
-                .matches(book -> book.getId() == createdBook.getId())
-                .matches(book -> book.getTitle().equals("BookTitle_Updated"));
+        var actualBook = bookService.findById(expectedBook.getId());
+        assertThat(actualBook)
+                .isPresent()
+                .get()
+                .usingRecursiveComparison()
+                .ignoringExpectedNullFields()
+                .isNotEqualTo(expectedBook);
+
+        var returnedBook = bookService.update(expectedBook.getId(), expectedBook.getTitle(), expectedBook.getAuthor().getId(), expectedGenres);
+
+        assertThat(returnedBook).isNotNull()
+                .matches(book -> book.getId() > 0)
+                .usingRecursiveComparison()
+                .ignoringExpectedNullFields()
+                .isEqualTo(expectedBook);
 
         assertThatCode(() -> {
-            actualBook.getAuthor().getFullName();
-            actualBook.getGenres().forEach(Genre::getName);
+            returnedBook.getAuthor().getFullName();
+            returnedBook.getGenres().forEach(Genre::getName);
         }).doesNotThrowAnyException();
-
-        assertThat(actualBook.getAuthor().getFullName()).isEqualTo("Author_3");
-        assertThat(actualBook.getGenres())
-                .extracting(Genre::getName)
-                .containsExactlyInAnyOrder("Genre_5", "Genre_6");
     }
 
     @DisplayName("должен удалять книгу по id")
