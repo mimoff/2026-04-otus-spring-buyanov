@@ -7,8 +7,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.otus.hw.repositories.JpaCommentRepository;
-import ru.otus.hw.repositories.JpaBookRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -16,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 @DisplayName("Сервис для работы с комментариями к книгам ")
 @DataJpaTest
 @Transactional(propagation = Propagation.NEVER)
-@Import({CommentServiceImpl.class, JpaCommentRepository.class, JpaBookRepository.class})
+@Import({CommentServiceImpl.class})
 class CommentServiceImplTest {
 
     @Autowired
