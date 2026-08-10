@@ -20,7 +20,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Comment> findById(long id) {
+    public Optional<Comment> findById(String id) {
         var comment = commentRepository.findById(id);
 
         if (!comment.isEmpty()) {
@@ -32,9 +32,8 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Comment> findByBookId(long bookId) {
-        var comments = commentRepository.findByBookId(bookId);
+    public List<Comment> findByBookId(String bookId) {
+        var comments = commentRepository.findAllByBookId(bookId);
 
         for (var comment : comments) {
             comment.getBook().getAuthor().getFullName();
@@ -45,18 +44,16 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    @Transactional
-    public Comment insert(String text, long bookId) {
-        return save(0, text, bookId);
+    public Comment insert(String text, String bookId) {
+        return save(null, text, bookId);
     }
 
     @Override
-    @Transactional
-    public Comment update(long id, String text, long bookId) {
+    public Comment update(String id, String text, String bookId) {
         return save(id, text, bookId);
     }
 
-    private Comment save(long id, String text, long bookId) {
+    private Comment save(String id, String text, String bookId) {
         var book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book with id %d not found".formatted(bookId)));
 
@@ -65,7 +62,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public void deleteById(long id) {
+    public void deleteById(String id) {
         commentRepository.deleteById(id);
     }
 }

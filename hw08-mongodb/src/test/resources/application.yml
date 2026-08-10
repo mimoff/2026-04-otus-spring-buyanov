@@ -1,18 +1,21 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:testdb
-  sql:
-    init:
-      mode: always
-      data-locations: data.sql
-      schema-locations: schema.sql
+  data:
+    mongodb:
+      database: books-test
+  shell:
+    interactive:
+      enabled: false
+    command:
+      version:
+        enabled: false
+  aop:
+    proxy-target-class: false
 
-  jpa:
-    generate-ddl: false
-    hibernate:
-      ddl-auto: none
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 6.0.11
 
-    show-sql: true
-    properties:
-      hibernate:
-      #format_sql: true
+mongock:
+  enabled: false
