@@ -1,12 +1,16 @@
 package ru.otus.hw.services;
 
 import lombok.RequiredArgsConstructor;
+import org.bson.Document;
+import org.springframework.context.event.EventListener;
+import org.springframework.data.mongodb.core.mapping.event.BeforeDeleteEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.otus.hw.exceptions.EntityNotFoundException;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.repositories.AuthorRepository;
 import ru.otus.hw.repositories.BookRepository;
+import ru.otus.hw.repositories.CommentRepository;
 import ru.otus.hw.repositories.GenreRepository;
 
 import java.util.List;
@@ -23,6 +27,8 @@ public class BookServiceImpl implements BookService {
     private final GenreRepository genreRepository;
 
     private final BookRepository bookRepository;
+
+    private final CommentRepository commentRepository;
 
     @Override
     public Optional<Book> findById(String id) {
@@ -54,6 +60,16 @@ public class BookServiceImpl implements BookService {
     @Override
     public void deleteById(String id) {
         bookRepository.deleteById(id);
+    }
+
+    @EventListener
+    public void handleBeforeDelete(BeforeDeleteEvent<Book> event) {
+        Document document = event.getDocument();
+        if (document != null && document.containsKey("_id")) {
+            Object bookId = document.get("_id");
+
+            commentRepository.deleteAllByBookId(bookId.toString());
+        }
     }
 
     private Book save(String id, String title, String authorId, Set<String> genresIds) {

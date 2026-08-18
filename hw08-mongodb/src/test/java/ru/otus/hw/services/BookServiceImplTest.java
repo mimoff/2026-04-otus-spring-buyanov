@@ -12,9 +12,9 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import ru.otus.hw.TestUtils;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.models.Genre;
+import ru.otus.hw.repositories.CommentRepository;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,6 +27,9 @@ class BookServiceImplTest {
 
     @Autowired
     private BookService bookService;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -131,13 +134,16 @@ class BookServiceImplTest {
     }
 
     @DisplayName("должен удалять книгу по id")
-    @Test
-    void shouldDeleteBookById() {
-        var createdBook = bookService.insert("BookTitle_ToDelete", "a2", Set.of("g3", "g4"));
-        assertThat(bookService.findById(createdBook.getId())).isPresent();
+    @ParameterizedTest
+    @MethodSource("ru.otus.hw.TestUtils#getDbBooks")
+    void shouldDeleteBookById(Book expectedBook) {
+        var bookId = expectedBook.getId();
+        assertThat(bookService.findById(bookId)).isPresent();
+        assertThat(commentRepository.findAllByBookId(bookId)).isNotEmpty();
 
-        bookService.deleteById(createdBook.getId());
+        bookService.deleteById(bookId);
 
-        assertThat(bookService.findById(createdBook.getId())).isEmpty();
+        assertThat(bookService.findById(bookId)).isEmpty();
+        assertThat(commentRepository.findAllByBookId(bookId)).isEmpty();
     }
 }

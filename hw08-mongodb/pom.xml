@@ -18,7 +18,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <mongock.version>5.5.1</mongock.version>
-        <flapdoodle.version>4.11.0</flapdoodle.version>
+        <flapdoodle.version>4.22.0</flapdoodle.version>
         <spring.shell.version>3.2.4</spring.shell.version>
         <reflections.version>0.10.2</reflections.version>
         <checkstyle-plugin.version>3.3.1</checkstyle-plugin.version>
@@ -36,14 +36,9 @@
 
         <dependency>
             <groupId>de.flapdoodle.embed</groupId>
-            <artifactId>de.flapdoodle.embed.mongo</artifactId>
-            <version>${flapdoodle.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>de.flapdoodle.embed</groupId>
             <artifactId>de.flapdoodle.embed.mongo.spring30x</artifactId>
             <version>${flapdoodle.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
