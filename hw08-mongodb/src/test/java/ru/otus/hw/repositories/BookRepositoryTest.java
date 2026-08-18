@@ -1,12 +1,14 @@
 package ru.otus.hw.repositories;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import ru.otus.hw.TestUtils;
 import ru.otus.hw.converters.AuthorConverter;
 import ru.otus.hw.converters.BookConverter;
@@ -18,24 +20,41 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Репозиторий на основе Jpa для работы с книгами ")
-@DataJpaTest
+@DataMongoTest
 @Import({BookConverter.class, AuthorConverter.class, GenreConverter.class})
-class JpaBookRepositoryTest {
+class BookRepositoryTest {
 
     @Autowired
-    private BookRepository repositoryJpa;
+    private BookRepository repository;
 
     @Autowired
     private BookConverter bookConverter;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    @BeforeEach
+    void setUp() {
+        mongoTemplate.dropCollection("authors");
+        mongoTemplate.dropCollection("books");
+        mongoTemplate.dropCollection("genres");
+        mongoTemplate.dropCollection("comments");
+
+        TestUtils.getDbAuthors().forEach(author -> mongoTemplate.save(author, "authors"));
+        TestUtils.getDbGenres().forEach(genre -> mongoTemplate.save(genre, "genres"));
+        TestUtils.getDbBooks().forEach(book -> mongoTemplate.save(book, "books"));
+        TestUtils.getDbComments().forEach(comment -> mongoTemplate.save(comment, "comments"));
+    }
 
     @DisplayName("должен загружать книгу по id")
     @ParameterizedTest
     @MethodSource("ru.otus.hw.TestUtils#getDbBooks")
     void shouldReturnCorrectBookById(Book expectedBook) {
-        var actualBook = repositoryJpa.findById(expectedBook.getId());
+        var actualBook = repository.findById(expectedBook.getId());
         assertThat(actualBook).isPresent()
                 .get()
                 .usingRecursiveComparison()
+                .ignoringExpectedNullFields()
                 .isEqualTo(expectedBook);
 
         System.out.println(bookConverter.bookToString(actualBook.get()));
@@ -44,7 +63,7 @@ class JpaBookRepositoryTest {
     @DisplayName("должен загружать список всех книг")
     @Test
     void shouldReturnCorrectBooksList() {
-        var actualBooks = repositoryJpa.findAll();
+        var actualBooks = repository.findAll();
         var expectedBooks = TestUtils.getDbBooks();
 
         assertThat(actualBooks).containsExactlyElementsOf(expectedBooks);
@@ -54,14 +73,14 @@ class JpaBookRepositoryTest {
     @DisplayName("должен сохранять новую книгу")
     @Test
     void shouldSaveNewBook() {
-        var expectedBook = new Book(0, "BookTitle_10500", TestUtils.getDbAuthors().get(0),
+        var expectedBook = new Book(null, "BookTitle_10500", TestUtils.getDbAuthors().get(0),
                 List.of(TestUtils.getDbGenres().get(0), TestUtils.getDbGenres().get(2)));
-        var returnedBook = repositoryJpa.save(expectedBook);
+        var returnedBook = repository.save(expectedBook);
         assertThat(returnedBook).isNotNull()
-                .matches(book -> book.getId() > 0)
+                .matches(book -> !book.getId().isBlank())
                 .usingRecursiveComparison().ignoringExpectedNullFields().isEqualTo(expectedBook);
 
-        assertThat(repositoryJpa.findById(returnedBook.getId()))
+        assertThat(repository.findById(returnedBook.getId()))
                 .isPresent()
                 .get()
                 .isEqualTo(returnedBook);
@@ -70,10 +89,10 @@ class JpaBookRepositoryTest {
     @DisplayName("должен сохранять измененную книгу")
     @Test
     void shouldSaveUpdatedBook() {
-        var expectedBook = new Book(1L, "BookTitle_10500", TestUtils.getDbAuthors().get(2),
+        var expectedBook = new Book("b1", "BookTitle_10500", TestUtils.getDbAuthors().get(2),
                 List.of(TestUtils.getDbGenres().get(4), TestUtils.getDbGenres().get(5)));
 
-        var actualBook = repositoryJpa.findById(expectedBook.getId());
+        var actualBook = repository.findById(expectedBook.getId());
         assertThat(actualBook)
                 .isPresent()
                 .get()
@@ -81,14 +100,14 @@ class JpaBookRepositoryTest {
                 .ignoringExpectedNullFields()
                 .isNotEqualTo(expectedBook);
 
-        var returnedBook = repositoryJpa.save(expectedBook);
+        var returnedBook = repository.save(expectedBook);
         assertThat(returnedBook).isNotNull()
-                .matches(book -> book.getId() > 0)
+                .matches(book -> !book.getId().isBlank())
                 .usingRecursiveComparison()
                 .ignoringExpectedNullFields()
                 .isEqualTo(expectedBook);
 
-        assertThat(repositoryJpa.findById(returnedBook.getId()))
+        assertThat(repository.findById(returnedBook.getId()))
                 .isPresent()
                 .get()
                 .usingRecursiveComparison()
@@ -99,9 +118,9 @@ class JpaBookRepositoryTest {
     @DisplayName("должен удалять книгу по id ")
     @Test
     void shouldDeleteBook() {
-        assertThat(repositoryJpa.findById(1L)).isPresent();
-        repositoryJpa.deleteById(1L);
-        assertThat(repositoryJpa.findById(1L)).isEmpty();
+        assertThat(repository.findById("b1")).isPresent();
+        repository.deleteById("b1");
+        assertThat(repository.findById("b1")).isEmpty();
     }
 
 }
