@@ -14,9 +14,9 @@
     <version>1.0</version>
 
     <properties>
-        <java.version>21</java.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <mongock.version>5.5.1</mongock.version>
         <flapdoodle.version>4.22.0</flapdoodle.version>
         <spring.shell.version>3.2.4</spring.shell.version>

@@ -16,7 +16,7 @@ de:
   flapdoodle:
     mongodb:
       embedded:
-        version: 6.0.11
+        version: 7.0.5
 
 mongock:
   #runner-type: "ApplicationRunner" # default
