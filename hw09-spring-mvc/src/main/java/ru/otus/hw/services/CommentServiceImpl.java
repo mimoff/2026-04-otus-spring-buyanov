@@ -45,6 +45,19 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Comment> findAll() {
+        var comments = commentRepository.findAll();
+
+        for (var comment : comments) {
+            comment.getBook().getAuthor().getFullName();
+            comment.getBook().getGenres().size();
+        }
+
+        return comments;
+    }
+
+    @Override
     @Transactional
     public Comment insert(String text, long bookId) {
         return save(0, text, bookId);

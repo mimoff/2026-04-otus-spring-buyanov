@@ -1,17 +1,12 @@
 package ru.otus.hw.controllers;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import ru.otus.hw.dto.AuthorDto;
-import ru.otus.hw.repositories.AuthorRepository;
+import ru.otus.hw.services.AuthorService;
 
 import java.util.List;
 
@@ -20,33 +15,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuthorController {
 
-    private final AuthorRepository repository;
+    private final AuthorService authorService;
 
-    @GetMapping("/")
+    @GetMapping("/authors")
     public String listPage(Model model) {
-        List<AuthorDto> authors = repository.findAll().stream()
+        List<AuthorDto> authors = authorService.findAll().stream()
                 .map(AuthorDto::fromDomainObject).toList();
         model.addAttribute("authors", authors);
         return "author-list";
-    }
-
-    @GetMapping("/edit")
-    public String editPage(@RequestParam("id") long id, Model model) {
-        AuthorDto author = repository.findById(id)
-                .map(AuthorDto::fromDomainObject)
-                .orElseThrow(NotFoundException::new);
-        model.addAttribute("author", author);
-        return "edit";
-    }
-
-    @PostMapping("/edit")
-    public String saveAuthor(@Valid @ModelAttribute("author") AuthorDto author,
-                             BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            return "edit";
-        }
-
-        repository.save(author.toDomainObject());
-        return "redirect:/";
     }
 }

@@ -2,24 +2,24 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>List of all authors</title>
+    <title>List of all genres</title>
     <style type="text/css">
         body {
             padding: 50px;
         }
 
-        .authors {
+        .genres {
             border: 1px solid steelblue;
             width: 300px;
             border-collapse: collapse;
         }
 
-        .authors tr td, th {
+        .genres tr td, th {
             padding: 5px;
             border: 1px solid steelblue;
         }
 
-        .authors td:last-child, td:first-child {
+        .genres td:last-child, td:first-child {
             width: 50px;
         }
 
@@ -51,9 +51,9 @@
     <a th:href="@{/comments}">Comments</a>
 </nav>
 
-<h3>Authors:</h3>
+<h3>Genres:</h3>
 
-<table class="authors">
+<table class="genres">
     <thead>
     <tr>
         <th>ID</th>
@@ -61,9 +61,9 @@
     </tr>
     </thead>
     <tbody>
-    <tr th:each="author : ${authors}">
-        <td th:text="${author.id}">1</td>
-        <td th:text="${author.fullName}">John Doe</td>
+    <tr th:each="genre : ${genres}">
+        <td th:text="${genre.id}">1</td>
+        <td th:text="${genre.name}">John Doe</td>
     </tr>
     </tbody>
 </table>
