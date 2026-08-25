@@ -6,16 +6,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import ru.otus.hw.dto.BookDto;
 import ru.otus.hw.dto.BookUpdateDto;
+import ru.otus.hw.dto.CommentDto;
 import ru.otus.hw.exceptions.EntityNotFoundException;
-import ru.otus.hw.models.Book;
 import ru.otus.hw.services.AuthorService;
 import ru.otus.hw.services.BookService;
+import ru.otus.hw.services.CommentService;
 import ru.otus.hw.services.GenreService;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Controller
@@ -28,8 +33,10 @@ public class BookController {
 
     private final GenreService genreService;
 
+    private final CommentService commentService;
+
     @GetMapping("/books")
-    public String listPage(Model model) {
+    public String listBooks(Model model) {
         List<BookDto> books = bookService.findAll().stream()
                 .map(BookDto::fromDomainObject).toList();
         model.addAttribute("books", books);
@@ -44,7 +51,7 @@ public class BookController {
         return "book-edit";
     }
 
-    @PostMapping
+    @PostMapping("/books")
     public String createBook(@Valid @ModelAttribute("book") BookUpdateDto bookUpdateDto,
                              BindingResult bindingResult,
                              Model model) {
@@ -58,8 +65,21 @@ public class BookController {
         return "redirect:/books";
     }
 
-    @GetMapping("/books/edit")
-    public String editPage(@RequestParam("id") long id, Model model) {
+    @GetMapping("/books/{id}")
+    public String viewBook(@PathVariable long id, Model model) {
+        BookDto book = bookService.findById(id)
+                .map(BookDto::fromDomainObject)
+                .orElseThrow(() -> new EntityNotFoundException("book id=%d not found".formatted(id)));
+        List<CommentDto> comments = commentService.findByBookId(id).stream()
+                .map(CommentDto::fromDomainObject)
+                .collect(Collectors.toList());
+        model.addAttribute("book", book);
+        model.addAttribute("comments", comments);
+        return "book-view";
+    }
+
+    @GetMapping("/books/{id}/edit")
+    public String editBook(@PathVariable long id, Model model) {
         BookUpdateDto book = bookService.findById(id)
                 .map(BookUpdateDto::fromDomainObject)
                 .orElseThrow(() -> new EntityNotFoundException("book id=%d not found".formatted(id)));
@@ -76,12 +96,13 @@ public class BookController {
             return "book-edit";
         }
 
-        bookService.update(bookUpdateDto.getId(), bookUpdateDto.getTitle(), bookUpdateDto.getAuthorId(), bookUpdateDto.getGenreIds());
+        bookService.update(bookUpdateDto.getId(), bookUpdateDto.getTitle(),
+                bookUpdateDto.getAuthorId(), bookUpdateDto.getGenreIds());
         return "redirect:/books";
     }
 
-    @PostMapping("/books/delete")
-    public String deleteBook(@RequestParam("id") long id) {
+    @PostMapping("/books/{id}/delete")
+    public String deleteBook(@PathVariable long id) {
         bookService.deleteById(id);
         return "redirect:/books";
     }

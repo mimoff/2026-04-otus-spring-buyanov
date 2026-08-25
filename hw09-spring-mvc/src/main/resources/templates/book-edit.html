@@ -59,15 +59,6 @@
         <div class="errors" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">Wrong book title error</div>
     </div>
 
-    <!--div class="row">
-        <label for="book-hobby-select" th:text="#{book-field-hobby} + ':'">Hobby:</label>
-        <select id="book-hobby-select" name="hobby" multiple>
-            <option value="Fishing" th:selected="*{hobby.contains('Fishing')}">Fishing</option>
-            <option value="Poetry" th:selected="*{hobby.contains('Poetry')}">Poetry</option>
-            <option value="Traveling" th:selected="*{hobby.contains('Traveling')}">Traveling</option>
-        </select>
-    </div-->
-
     <div class="row">
         <label for="authorId">Author</label>
         <select id="authorId" th:field="*{authorId}" required>

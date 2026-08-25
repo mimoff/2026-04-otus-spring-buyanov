@@ -14,8 +14,8 @@ public class CommentDto {
 
     private BookDto book;
 
-    public Comment toDomainObject(){
-        return new Comment(id, text, book.toDomainObject() );
+    public Comment toDomainObject() {
+        return new Comment(id, text, book.toDomainObject());
     }
 
     public static CommentDto fromDomainObject(Comment comment) {

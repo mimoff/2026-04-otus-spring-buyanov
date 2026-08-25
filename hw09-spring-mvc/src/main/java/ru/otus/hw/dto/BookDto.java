@@ -19,7 +19,7 @@ public class BookDto {
 
     private List<GenreDto> genres;
 
-    public Book toDomainObject(){
+    public Book toDomainObject() {
         return new Book(id, title, author.toDomainObject(),
                 genres.stream()
                         .map(GenreDto::toDomainObject)

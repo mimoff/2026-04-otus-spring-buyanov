@@ -19,13 +19,13 @@ public class BookUpdateDto {
 
     private long id;
 
-//    @NotBlank(message = "{books.form.validation.title.notBlank}")
+    @NotBlank(message = "Title cannot be empty")
     private String title;
 
-//    @NotNull(message = "Author cannot be null")
+    @NotNull(message = "Author cannot be empty")
     private Long authorId;
 
-//    @NotEmpty(message = "{books.form.validation.genres.notEmpty}")
+    @NotEmpty(message = "Genre list cannot be empty")
     private Set<Long> genreIds;
 
     public static BookUpdateDto fromDomainObject(Book book) {

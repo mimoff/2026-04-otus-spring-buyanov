@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>List of all books</title>
+    <title>Book detail info</title>
     <style type="text/css">
         body {
             padding: 50px;
@@ -51,38 +51,36 @@
     <a th:href="@{/comments}">Comments</a>
 </nav>
 
-<h3>Books:</h3>
-
-<div class="actions">
-    <a th:href="@{/books/new}">Create new book</a>
-</div>
+<h3>Book detail info:</h3>
 
 <table class="books">
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Title</th>
-        <th>Author</th>
-        <th>Genres</th>
-        <th>Action</th>
-    </tr>
-    </thead>
     <tbody>
-    <tr th:each="book : ${books}">
+    <tr>
+        <td>ID</td>
         <td th:text="${book.id}">1</td>
+    </tr>
+    <tr>
+        <td>Title</td>
         <td th:text="${book.title}">John Doe</td>
+    </tr>
+    <tr>
+        <td>Author</td>
         <td th:text="${book.author.fullName}">1</td>
+    </tr>
+    <tr>
+        <td>Genres</td>
         <td>
                 <span th:each="genre : ${book.genres}">
                     <span th:text="${genre.name}">Genre</span>
                 </span>
         </td>
+    </tr>
+    <tr>
+        <td>Comments</td>
         <td>
-            <a th:href="@{/books/{id}(id=${book.id})}" href="book-view.html">View</a>
-            <a th:href="@{/books/{id}/edit(id=${book.id})}" href="book-edit.html">Edit</a>
-            <form th:action="@{/books/{id}/delete(id=${book.id})}" method="post">
-                <button type="submit">Delete</button>
-            </form>
+                <span th:each="comment : ${comments}">
+                    <span th:text="${comment.text}">Genre</span>
+                </span>
         </td>
     </tr>
     </tbody>
