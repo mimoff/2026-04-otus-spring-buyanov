@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>List of all books</title>
+    <style type="text/css">
+        body {
+            padding: 50px;
+        }
+
+        .books {
+            border: 1px solid steelblue;
+            width: 300px;
+            border-collapse: collapse;
+        }
+
+        .books tr td, th {
+            padding: 5px;
+            border: 1px solid steelblue;
+        }
+
+        .books td:last-child, td:first-child {
+            width: 50px;
+        }
+
+        h3 {
+            background-image: url("../static/listmark.png");
+            background-repeat: no-repeat;
+            padding: 2px;
+            padding-left: 30px;
+        }
+
+    </style>
+
+    <style type="text/css" th:inline="text">
+        [[h3]] {
+            background-image: url([[@{/listmark.png}]]);
+            background-repeat: no-repeat;
+            padding: 2px;
+            padding-left: 30px;
+        }
+
+    </style>
+</head>
+<body>
+
+<nav>
+    <a th:href="@{/books}">Books</a>
+    <a th:href="@{/authors}">Authors</a>
+    <a th:href="@{/genres}">Genres</a>
+    <a th:href="@{/comments}">Comments</a>
+</nav>
+
+<h3>Books:</h3>
+
+<div class="actions">
+    <a th:href="@{/books/new}">Create new book</a>
+</div>
+
+<table class="books">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Genres</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="book : ${books}">
+        <td th:text="${book.id}">1</td>
+        <td th:text="${book.title}">John Doe</td>
+        <td th:text="${book.author.fullName}">1</td>
+        <td>
+                <span th:each="genre : ${book.genres}">
+                    <span th:text="${genre.name}">Genre</span>
+                </span>
+        </td>
+        <td>
+            <a th:href="@{/books/{id}(id=${book.id})}" href="book-view.html">View</a>
+            <a th:href="@{/books/{id}/edit(id=${book.id})}" href="book-edit.html">Edit</a>
+            <form th:action="@{/books/{id}/delete(id=${book.id})}" method="post">
+                <button type="submit">Delete</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
