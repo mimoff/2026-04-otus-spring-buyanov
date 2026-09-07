@@ -1,176 +1,145 @@
 package ru.otus.hw.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.otus.hw.TestUtils;
 import ru.otus.hw.dto.BookDto;
+import ru.otus.hw.dto.BookUpdateDto;
 import ru.otus.hw.exceptions.EntityNotFoundException;
-import ru.otus.hw.models.Genre;
-import ru.otus.hw.services.AuthorService;
 import ru.otus.hw.services.BookService;
-import ru.otus.hw.services.CommentService;
-import ru.otus.hw.services.GenreService;
 
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @DisplayName("BookController должен")
 @WebMvcTest(BookController.class)
 class BookControllerTest {
 
-    private static final Long BOOK_ID = 1l;
-
-    private static final String BOOK_TITLE = "Any title";
-
-    private static final Long AUTHOR_ID = 2l;
-
-    private static final Long GENRE_ID_1 = 3l;
-
-    private static final Long GENRE_ID_2 = 4l;
-
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
-    private AuthorService authorService;
-
-    @MockitoBean
-    private GenreService genreService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockitoBean
     private BookService bookService;
 
-    @MockitoBean
-    private CommentService commentService;
-
     @Test
-    @DisplayName("вернуть страницу с книгами")
-    void shouldReturnBooksListPage() throws Exception {
+    @DisplayName("должен возвращать список всех книг")
+    void shouldReturnAllBooks() throws Exception {
         var books = TestUtils.getDbBooks();
         when(bookService.findAll()).thenReturn(books);
         var expectedBooks = books.stream().map(BookDto::fromDomainObject).collect(Collectors.toList());
 
-        mockMvc.perform(get("/books"))
+        mockMvc.perform(get("/api/books"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("book-list"))
-                .andExpect(model().attribute("books", hasSize(expectedBooks.size())))
-                .andExpect(model().attribute("books", expectedBooks))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString(expectedBooks.get(0).getTitle())));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(books.size()))
+                .andExpect(jsonPath("$[0].id").value(expectedBooks.get(0).getId()))
+                .andExpect(jsonPath("$[0].title").value(expectedBooks.get(0).getTitle()))
+                .andExpect(jsonPath("$[0].author.fullName").value(expectedBooks.get(0).getAuthor().getFullName()))
+                .andExpect(jsonPath("$[0].genres[0].name").value(expectedBooks.get(0).getGenres().get(0).getName()));
 
         verify(bookService).findAll();
     }
 
     @Test
-    @DisplayName("вернуть страницу с созданием книги")
-    void shouldReturnCreateBookPage() throws Exception {
-        var authors = TestUtils.getDbAuthors();
-        when(authorService.findAll()).thenReturn(authors);
+    @DisplayName("должен возвращать книгу по id")
+    void shouldReturnBookById() throws Exception {
+        var expectedBook = TestUtils.getDbBooks().get(0);
+        when(bookService.findById(expectedBook.getId())).thenReturn(Optional.of(expectedBook));
 
-        var genres = TestUtils.getDbGenres();
-        when(genreService.findAll()).thenReturn(genres);
-
-        mockMvc.perform(get("/books/new"))
+        mockMvc.perform(get("/api/books/{id}", expectedBook.getId()))
                 .andExpect(status().isOk())
-                .andExpect(view().name("book-edit"))
-                .andExpect(model().attributeExists("book", "authors", "genres"))
-                .andExpect(model().attribute("authors", hasSize(authors.size())))
-                .andExpect(model().attribute("genres", hasSize(genres.size())));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(expectedBook.getId()))
+                .andExpect(jsonPath("$.title").value(expectedBook.getTitle()))
+                .andExpect(jsonPath("$.author.id").value(expectedBook.getAuthor().getId()))
+                .andExpect(jsonPath("$.author.fullName").value(expectedBook.getAuthor().getFullName()))
+                .andExpect(jsonPath("$.genres[0].name").value(expectedBook.getGenres().get(0).getName()));
 
-        verify(authorService).findAll();
-        verify(genreService).findAll();
+        verify(bookService).findById(expectedBook.getId());
+    }
+
+    @DisplayName("должен создать книгу и вернуть созданную книгу")
+    @Test
+    void shouldCreateBook() throws Exception {
+        var expectedBook = TestUtils.getDbBooks().get(0);
+        var bookDto = BookUpdateDto.fromDomainObject(expectedBook);
+        when(bookService.insert(bookDto.getTitle(), bookDto.getAuthorId(), bookDto.getGenreIds())).thenReturn(expectedBook);
+
+        mockMvc.perform(post("/api/books")
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bookDto)))
+                .andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(expectedBook.getId()))
+                .andExpect(jsonPath("$.title").value(expectedBook.getTitle()))
+                .andExpect(jsonPath("$.author.id").value(expectedBook.getAuthor().getId()))
+                .andExpect(jsonPath("$.author.fullName").value(expectedBook.getAuthor().getFullName()))
+                .andExpect(jsonPath("$.genres[0].name").value(expectedBook.getGenres().get(0).getName()));
+
+        verify(bookService).insert(bookDto.getTitle(), bookDto.getAuthorId(), bookDto.getGenreIds());
     }
 
     @Test
-    @DisplayName("вернуть страницу редактирования книги")
-    void shouldReturnEditBookPage() throws Exception {
-        var book = TestUtils.getDbBooks().get(0);
-        when(bookService.findById(book.getId())).thenReturn(Optional.of(book));
-        var genreIds = book.getGenres().stream().map(Genre::getId).collect(Collectors.toSet());
+    @DisplayName("должен обновить книгу и вернуть обновленную книгу")
+    void shouldUpdateBook() throws Exception {
+        var expectedBook = TestUtils.getDbBooks().get(0);
+        var bookDto = BookUpdateDto.fromDomainObject(expectedBook);
+        when(bookService.update(bookDto.getId(), bookDto.getTitle(), bookDto.getAuthorId(), bookDto.getGenreIds()))
+                .thenReturn(expectedBook);
 
-        var authors = TestUtils.getDbAuthors();
-        when(authorService.findAll()).thenReturn(authors);
-
-        var genres = TestUtils.getDbGenres();
-        when(genreService.findAll()).thenReturn(genres);
-
-        mockMvc.perform(get("/books/{id}/edit", book.getId()))
+        mockMvc.perform(put("/api/books/{id}", bookDto.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bookDto)))
                 .andExpect(status().isOk())
-                .andExpect(view().name("book-edit"))
-                .andExpect(model().attributeExists("book", "authors", "genres"))
-                .andExpect(model().attribute("book", hasProperty("id", is(book.getId()))))
-                .andExpect(model().attribute("book", hasProperty("title", is(book.getTitle()))))
-                .andExpect(model().attribute("book", hasProperty("authorId", is(book.getAuthor().getId()))))
-                .andExpect(model().attribute("book", hasProperty("genreIds", is(genreIds))));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(expectedBook.getId()))
+                .andExpect(jsonPath("$.title").value(expectedBook.getTitle()))
+                .andExpect(jsonPath("$.author.id").value(expectedBook.getAuthor().getId()))
+                .andExpect(jsonPath("$.author.fullName").value(expectedBook.getAuthor().getFullName()))
+                .andExpect(jsonPath("$.genres[0].name").value(expectedBook.getGenres().get(0).getName()));
 
-        verify(bookService).findById(book.getId());
-        verify(authorService).findAll();
-        verify(genreService).findAll();
+        verify(bookService).update(bookDto.getId(), bookDto.getTitle(), bookDto.getAuthorId(), bookDto.getGenreIds());
     }
 
     @Test
-    @DisplayName("создать книгу и перенаправить на страницу с книгами")
-    void shouldCreateBookAndRedirect() throws Exception {
-        mockMvc.perform(post("/books")
-                        .param("title", BOOK_TITLE)
-                        .param("authorId", AUTHOR_ID.toString())
-                        .param("genreIds", GENRE_ID_1.toString(), GENRE_ID_2.toString()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/books"));
-
-        verify(bookService).insert(BOOK_TITLE, AUTHOR_ID, Set.of(GENRE_ID_1, GENRE_ID_2));
-    }
-
-    @Test
-    @DisplayName("обновить книгу и перенаправить на страницу с книгами")
-    void shouldUpdateBookAndRedirect() throws Exception {
-        mockMvc.perform(post("/books/edit")
-                        .param("id", BOOK_ID.toString())
-                        .param("title", BOOK_TITLE)
-                        .param("authorId", AUTHOR_ID.toString())
-                        .param("genreIds", GENRE_ID_1.toString(), GENRE_ID_2.toString()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/books"));
-
-        verify(bookService).update(BOOK_ID, BOOK_TITLE, AUTHOR_ID, Set.of(GENRE_ID_1, GENRE_ID_2));
-    }
-
-    @Test
-    @DisplayName("удалить книгу и перенаправить на страницу с книгами")
-    void shouldDeleteBookAndRedirect() throws Exception {
+    @DisplayName("удалить книгу")
+    void shouldDeleteBook() throws Exception {
         var bookId = 1l;
-        mockMvc.perform(post("/books/{id}/delete", bookId))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/books"));
+        mockMvc.perform(delete("/api/books/{id}", bookId))
+                .andExpect(status().isNoContent());
 
         verify(bookService).deleteById(bookId);
     }
 
-    @DisplayName("должен возвращать 404 при редактировании несуществующей книги")
+    @DisplayName("должен возвращать 404 при удалении несуществующей книги")
     @Test
-    void shouldReturnNotFoundForMissingBookEdit() throws Exception {
-        given(bookService.findById(1000L)).willThrow(new EntityNotFoundException("Book with id 100 not found"));
+    void shouldReturnNotFoundForMissingBookDelete() throws Exception {
+        doThrow(new EntityNotFoundException("Book with id 1000 not found"))
+                .when(bookService).deleteById(1000L);
 
-        mockMvc.perform(get("/books/1000/edit"))
-                .andExpect(status().isNotFound())
-                .andExpect(view().name("error"));
+        mockMvc.perform(delete("/api/books/1000"))
+                .andExpect(status().isNotFound());
     }
 }
