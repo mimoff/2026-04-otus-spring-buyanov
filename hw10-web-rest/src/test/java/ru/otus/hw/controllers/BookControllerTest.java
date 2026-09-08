@@ -17,7 +17,6 @@ import ru.otus.hw.services.BookService;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -127,6 +126,8 @@ class BookControllerTest {
     @DisplayName("удалить книгу")
     void shouldDeleteBook() throws Exception {
         var bookId = 1l;
+        when(bookService.findById(bookId))
+                .thenReturn(Optional.of(TestUtils.getDbBooks().get(0)));
         mockMvc.perform(delete("/api/books/{id}", bookId))
                 .andExpect(status().isNoContent());
 
@@ -136,9 +137,8 @@ class BookControllerTest {
     @DisplayName("должен возвращать 404 при удалении несуществующей книги")
     @Test
     void shouldReturnNotFoundForMissingBookDelete() throws Exception {
-        doThrow(new EntityNotFoundException("Book with id 1000 not found"))
-                .when(bookService).deleteById(1000L);
-
+        when(bookService.findById(1000L))
+                .thenThrow(new EntityNotFoundException("Book with id 1000 not found"));
         mockMvc.perform(delete("/api/books/1000"))
                 .andExpect(status().isNotFound());
     }

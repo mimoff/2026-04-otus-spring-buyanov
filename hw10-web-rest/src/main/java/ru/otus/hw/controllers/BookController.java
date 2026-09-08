@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.otus.hw.dto.BookDto;
 import ru.otus.hw.dto.BookUpdateDto;
+import ru.otus.hw.exceptions.EntityNotFoundException;
 import ru.otus.hw.services.BookService;
 
 import java.util.List;
@@ -36,7 +37,8 @@ public class BookController {
 
     @GetMapping("/{id}")
     public BookDto findById(@PathVariable Long id) {
-        return BookDto.fromDomainObject(bookService.findById(id).orElseThrow());
+        return BookDto.fromDomainObject(bookService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Book with id %d not found".formatted(id))));
     }
 
     @PostMapping
@@ -60,6 +62,8 @@ public class BookController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
+        bookService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Book with id %d not found".formatted(id)));
         bookService.deleteById(id);
 
         return ResponseEntity.noContent().build();
