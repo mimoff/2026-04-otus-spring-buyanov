@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.otus.hw.dto.BookDto;
 import ru.otus.hw.dto.BookUpdateDto;
-import ru.otus.hw.exceptions.EntityNotFoundException;
 import ru.otus.hw.services.BookService;
 
 import java.util.List;
@@ -30,40 +29,31 @@ public class BookController {
 
     @GetMapping
     public List<BookDto> findAll()  {
-        List<BookDto> books = bookService.findAll().stream()
-                .map(BookDto::fromDomainObject).toList();
-        return books;
+        return bookService.findAll();
     }
 
     @GetMapping("/{id}")
     public BookDto findById(@PathVariable Long id) {
-        return BookDto.fromDomainObject(bookService.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Book with id %d not found".formatted(id))));
+        return bookService.findById(id);
     }
 
     @PostMapping
     public ResponseEntity<BookDto> createBook(@Valid @RequestBody BookUpdateDto bookUpdateDto) {
-        var newBook = bookService.insert(bookUpdateDto.getTitle(),
-                bookUpdateDto.getAuthorId(), bookUpdateDto.getGenreIds());
-        var responseBook = BookDto.fromDomainObject(newBook);
+        var newBook = bookService.insert(bookUpdateDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(responseBook);
+                .body(newBook);
     }
 
     @PutMapping("/{id}")
     public BookDto saveBook(@PathVariable Long id, @Valid @RequestBody BookUpdateDto bookUpdateDto) {
-        var savedBook = bookService.update(id, bookUpdateDto.getTitle(),
-                bookUpdateDto.getAuthorId(), bookUpdateDto.getGenreIds());
+        bookUpdateDto.setId(id);
 
-        var responseBook = BookDto.fromDomainObject(savedBook);
-        return responseBook;
+        return bookService.update(bookUpdateDto);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
-        bookService.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Book with id %d not found".formatted(id)));
         bookService.deleteById(id);
 
         return ResponseEntity.noContent().build();

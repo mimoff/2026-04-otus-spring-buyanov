@@ -1,11 +1,13 @@
 package ru.otus.hw;
 
+import ru.otus.hw.dto.BookDto;
 import ru.otus.hw.models.Author;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.models.Comment;
 import ru.otus.hw.models.Genre;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 final public class TestUtils {
@@ -35,6 +37,12 @@ final public class TestUtils {
         var dbAuthors = getDbAuthors();
         var dbGenres = getDbGenres();
         return getDbBooks(dbAuthors, dbGenres);
+    }
+
+    public static List<BookDto> getDbBooksDto() {
+        var dbAuthors = getDbAuthors();
+        var dbGenres = getDbGenres();
+        return getDbBooks(dbAuthors, dbGenres).stream().map(BookDto::fromDomainObject).collect(Collectors.toList());
     }
 
     public static List<Comment> getDbComments() {

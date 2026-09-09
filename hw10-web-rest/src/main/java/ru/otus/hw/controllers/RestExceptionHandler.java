@@ -14,12 +14,7 @@ import ru.otus.hw.exceptions.EntityNotFoundException;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
-@RestControllerAdvice/*(basePackageClasses = {
-        AuthorController.class,
-        GenreController.class,
-        BookController.class,
-        CommentController.class
-})*/
+@RestControllerAdvice
 public class RestExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
