@@ -20,9 +20,7 @@ public class GenreController {
 
     @GetMapping
     public List<GenreDto> findAll() {
-        List<GenreDto> genres = genreService.findAll().stream()
-                .map(GenreDto::fromDomainObject).toList();
-        return genres;
+        return  genreService.findAll();
     }
 
 }

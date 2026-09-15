@@ -17,16 +17,16 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class BookUpdateDto {
 
-    private long id;
+    private String id;
 
     @NotBlank(message = "Title cannot be empty")
     private String title;
 
     @NotNull(message = "Author cannot be empty")
-    private Long authorId;
+    private String authorId;
 
     @NotEmpty(message = "Genre list cannot be empty")
-    private Set<Long> genreIds;
+    private Set<String> genreIds;
 
     public static BookUpdateDto fromDomainObject(Book book) {
         return new BookUpdateDto(book.getId(),

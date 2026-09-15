@@ -20,8 +20,6 @@ public class AuthorController {
 
     @GetMapping
     public List<AuthorDto> findAll() {
-        List<AuthorDto> authors = authorService.findAll().stream()
-                .map(AuthorDto::fromDomainObject).toList();
-        return authors;
+        return authorService.findAll();
     }
 }

@@ -121,7 +121,7 @@ class BookControllerTest {
     @Test
     @DisplayName("удалить книгу")
     void shouldDeleteBook() throws Exception {
-        var bookId = 1l;
+        var bookId = "b1";
 //        when(bookService.findById(bookId))
 //                .thenReturn(Optional.of(TestUtils.getDbBooks().get(0)));
         mockMvc.perform(delete("/api/books/{id}", bookId))
@@ -133,10 +133,10 @@ class BookControllerTest {
     @DisplayName("должен возвращать 404 при удалении несуществующей книги")
     @Test
     void shouldReturnNotFoundForMissingBookDelete() throws Exception {
-        doThrow(new EntityNotFoundException("Book with id 1000 not found"))
-            .when(bookService).deleteById(1000L);
+        doThrow(new EntityNotFoundException("Book with id b1000 not found"))
+            .when(bookService).deleteById("b1000");
 
-        mockMvc.perform(delete("/api/books/1000"))
+        mockMvc.perform(delete("/api/books/b1000"))
                 .andExpect(status().isNotFound());
     }
 }
