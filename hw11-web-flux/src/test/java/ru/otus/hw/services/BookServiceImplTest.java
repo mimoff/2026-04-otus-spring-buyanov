@@ -7,12 +7,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import ru.otus.hw.TestUtils;
 import ru.otus.hw.dto.BookDto;
 import ru.otus.hw.dto.BookUpdateDto;
@@ -57,30 +53,20 @@ class BookServiceImplTest {
     @ParameterizedTest
     @MethodSource("ru.otus.hw.TestUtils#getDbBooksDto")
     void shouldReturnBookByIdAndAllowRelationsAccessOutsideServiceTransaction(BookDto expectedBook) {
-        var actualBook = bookService.findById(expectedBook.getId());
+        var actualBook = bookService.findById(expectedBook.getId()).block();
 
         assertThat(actualBook)
                 .usingRecursiveComparison()
                 .isEqualTo(expectedBook);
-
-        assertThatCode(() -> {
-            actualBook.getAuthor().getFullName();
-            actualBook.getGenres().forEach(GenreDto::getName);
-        }).doesNotThrowAnyException();
     }
 
     @DisplayName("должен загружать все книги и позволять использовать связи вне транзакции сервиса")
     @Test
     void shouldReturnAllBooksAndAllowRelationsAccessOutsideServiceTransaction() {
-        var actualBooks = bookService.findAll();
+        var actualBooks = bookService.findAll().collectList().block();
         var expectedBooks = TestUtils.getDbBooksDto();
 
         assertThat(actualBooks).containsExactlyElementsOf(expectedBooks);
-
-        assertThatCode(() -> actualBooks.forEach(book -> {
-            book.getAuthor().getFullName();
-            book.getGenres().forEach(GenreDto::getName);
-        })).doesNotThrowAnyException();
     }
 
     @DisplayName("должен сохранять новую книгу и позволять использовать ее связи вне транзакции сервиса")
@@ -91,7 +77,7 @@ class BookServiceImplTest {
         var expectedGenres = expectedBook.getGenres().stream()
                 .map(Genre::getId).collect(Collectors.toSet());
         var newBook = new BookUpdateDto(null, expectedBook.getTitle(), expectedBook.getAuthor().getId(), expectedGenres);
-        var actualBook = bookService.insert(newBook);
+        var actualBook = bookService.insert(newBook).block();
 
         assertThat(actualBook).isNotNull()
                 .matches(book -> !book.getId().isEmpty())
@@ -100,12 +86,7 @@ class BookServiceImplTest {
                 .isEqualTo(expectedBook);
 
         assertThatCode(() -> {
-            actualBook.getAuthor().getFullName();
-            actualBook.getGenres().forEach(GenreDto::getName);
-        }).doesNotThrowAnyException();
-
-        assertThatCode(() -> {
-            bookService.findById(actualBook.getId());
+            bookService.findById(actualBook.getId()).block();
         }).doesNotThrowAnyException();
     }
 
@@ -117,14 +98,14 @@ class BookServiceImplTest {
         var expectedGenres = expectedBook.getGenres().stream()
                 .map(GenreDto::getId).collect(Collectors.toSet());
 
-        var actualBook = bookService.findById(expectedBook.getId());
+        var actualBook = bookService.findById(expectedBook.getId()).block();
         assertThat(actualBook)
                 .usingRecursiveComparison()
                 .ignoringExpectedNullFields()
                 .isNotEqualTo(expectedBook);
 
         var bookUpdateDto = new BookUpdateDto(expectedBook.getId(), expectedBook.getTitle(), expectedBook.getAuthor().getId(), expectedGenres);
-        var returnedBook = bookService.update(bookUpdateDto);
+        var returnedBook = bookService.update(bookUpdateDto).block();
 
         assertThat(returnedBook).isNotNull()
                 .matches(book -> !book.getId().isEmpty())
@@ -141,14 +122,15 @@ class BookServiceImplTest {
     @DisplayName("должен удалять книгу по id")
     @Test
     void shouldDeleteBookById() {
-        var createdBook = bookService.insert(new BookUpdateDto(null,"BookTitle_ToDelete", "a2", Set.of("g3", "g4")));
-        assertThat(bookService.findById(createdBook.getId())).isNotNull();
+        var createdBook = bookService.insert(
+                new BookUpdateDto(null,"BookTitle_ToDelete", "a2", Set.of("g3", "g4"))).block();
+        assertThat(bookService.findById(createdBook.getId()).block()).isNotNull();
 
-        bookService.deleteById(createdBook.getId());
+        bookService.deleteById(createdBook.getId()).block();
 
 //        assertThat(bookService.findById(createdBook.getId())).isEmpty();
 
-        assertThatThrownBy(() -> bookService.findById(createdBook.getId()))
+        assertThatThrownBy(() -> bookService.findById(createdBook.getId()).block())
                 .isInstanceOf(EntityNotFoundException.class);
 
     }

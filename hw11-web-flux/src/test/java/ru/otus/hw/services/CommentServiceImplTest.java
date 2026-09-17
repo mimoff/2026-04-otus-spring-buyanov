@@ -8,9 +8,11 @@ import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import ru.otus.hw.TestUtils;
+import ru.otus.hw.dto.CommentUpdateDto;
+import ru.otus.hw.exceptions.EntityNotFoundException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Сервис для работы с комментариями к книгам ")
 @DataMongoTest
@@ -36,77 +38,52 @@ class CommentServiceImplTest {
         TestUtils.getDbComments().forEach(comment -> mongoTemplate.save(comment, "comments"));
     }
 
-    @DisplayName("должен загружать комментарий по id и позволять использовать связи вне транзакции сервиса")
+    @DisplayName("должен загружать комментарий по id")
     @Test
     void shouldReturnCommentByIdAndAllowRelationsAccessOutsideServiceTransaction() {
-        var actualComment = commentService.findById("c1");
+        var actualComment = commentService.findById("c1").block();
 
-        assertThat(actualComment).isPresent()
-                .get()
+        assertThat(actualComment)
+                .isNotNull()
                 .matches(comment -> comment.getId().equals("c1"))
                 .matches(comment -> comment.getText().equals("Comment_1"));
-
-        assertThatCode(() -> {
-            var comment = actualComment.orElseThrow();
-            comment.getBook().getTitle();
-            comment.getBook().getAuthor().getFullName();
-            comment.getBook().getGenres().forEach(genre -> genre.getName());
-        }).doesNotThrowAnyException();
     }
 
-    @DisplayName("должен загружать все комментарии к книге и позволять использовать связи вне транзакции сервиса")
+    @DisplayName("должен загружать все комментарии к книге")
     @Test
     void shouldReturnCommentsByBookIdAndAllowRelationsAccessOutsideServiceTransaction() {
-        var actualComments = commentService.findByBookId("b1");
+        var actualComments = commentService.findAllByBookId("b1").collectList().block();
 
         assertThat(actualComments).hasSize(2)
                 .extracting(comment -> comment.getText())
                 .containsExactly("Comment_1", "Comment_2");
-
-        assertThatCode(() -> actualComments.forEach(comment -> {
-            comment.getBook().getTitle();
-            comment.getBook().getAuthor().getFullName();
-            comment.getBook().getGenres().forEach(genre -> genre.getName());
-        })).doesNotThrowAnyException();
     }
 
-    @DisplayName("должен сохранять новый комментарий и позволять использовать связи вне транзакции сервиса")
+    @DisplayName("должен сохранять новый комментарий")
     @Test
     void shouldInsertCommentAndAllowRelationsAccessOutsideServiceTransaction() {
-        var actualComment = commentService.insert("Comment_10500", "b1");
+        var actualComment = commentService.insert(new CommentUpdateDto(null,"Comment_10500", "b1")).block();
         try {
             assertThat(actualComment).isNotNull()
                     .matches(comment -> !comment.getId().isEmpty())
                     .matches(comment -> comment.getText().equals("Comment_10500"));
 
-            assertThatCode(() -> {
-                actualComment.getBook().getTitle();
-                actualComment.getBook().getAuthor().getFullName();
-                actualComment.getBook().getGenres().forEach(genre -> genre.getName());
-            }).doesNotThrowAnyException();
-
-            assertThat(commentService.findById(actualComment.getId())).isPresent();
+            assertThat(commentService.findById(actualComment.getId()).block()).isNotNull();
         } finally {
             commentService.deleteById(actualComment.getId());
         }
     }
 
-    @DisplayName("должен обновлять комментарий и позволять использовать связи вне транзакции сервиса")
+    @DisplayName("должен обновлять комментарий")
     @Test
     void shouldUpdateCommentAndAllowRelationsAccessOutsideServiceTransaction() {
-        var createdComment = commentService.insert("Comment_ToUpdate", "b1");
+        var createdComment = commentService.insert( new CommentUpdateDto(null, "Comment_ToUpdate", "b1")).block();
         try {
-            var actualComment = commentService.update(createdComment.getId(), "Comment_edited", "b3");
+            var actualComment = commentService.update(new CommentUpdateDto( createdComment.getId(), "Comment_edited", "b3")).block();
 
             assertThat(actualComment).isNotNull()
-                    .matches(comment -> comment.getId() == createdComment.getId())
+                    .matches(comment -> comment.getId().equals(createdComment.getId()))
                     .matches(comment -> comment.getText().equals("Comment_edited"));
-
-            assertThatCode(() -> {
-                actualComment.getBook().getTitle();
-                actualComment.getBook().getAuthor().getFullName();
-                actualComment.getBook().getGenres().forEach(genre -> genre.getName());
-            }).doesNotThrowAnyException();
 
             assertThat(actualComment.getBook().getId()).isEqualTo("b3");
             assertThat(actualComment.getBook().getAuthor().getFullName()).isEqualTo("Author_3");
@@ -121,11 +98,12 @@ class CommentServiceImplTest {
     @DisplayName("должен удалять комментарий по id")
     @Test
     void shouldDeleteCommentById() {
-        var createdComment = commentService.insert("Comment_ToDelete", "b1");
-        assertThat(commentService.findById(createdComment.getId())).isPresent();
+        var createdComment = commentService.insert( new CommentUpdateDto(null, "Comment_ToDelete", "b1")).block();
+        assertThat(commentService.findById(createdComment.getId()).block()).isNotNull();
 
-        commentService.deleteById(createdComment.getId());
+        commentService.deleteById(createdComment.getId()).block();
 
-        assertThat(commentService.findById(createdComment.getId())).isEmpty();
+        assertThatThrownBy(() -> commentService.findById(createdComment.getId()).block())
+                .isInstanceOf(EntityNotFoundException.class);
     }
 }

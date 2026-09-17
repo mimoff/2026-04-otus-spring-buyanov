@@ -50,20 +50,20 @@ class BookRepositoryTest {
     @ParameterizedTest
     @MethodSource("ru.otus.hw.TestUtils#getDbBooks")
     void shouldReturnCorrectBookById(Book expectedBook) {
-        var actualBook = repository.findById(expectedBook.getId());
-        assertThat(actualBook).isPresent()
-                .get()
+        var actualBook = repository.findById(expectedBook.getId()).block();
+        assertThat(actualBook)
+                .isNotNull()
                 .usingRecursiveComparison()
                 .ignoringExpectedNullFields()
                 .isEqualTo(expectedBook);
 
-        System.out.println(bookConverter.bookToString(actualBook.get()));
+        System.out.println(bookConverter.bookToString(actualBook));
     }
 
     @DisplayName("должен загружать список всех книг")
     @Test
     void shouldReturnCorrectBooksList() {
-        var actualBooks = repository.findAll();
+        var actualBooks = repository.findAll().collectList().block();
         var expectedBooks = TestUtils.getDbBooks();
 
         assertThat(actualBooks).containsExactlyElementsOf(expectedBooks);
@@ -75,14 +75,13 @@ class BookRepositoryTest {
     void shouldSaveNewBook() {
         var expectedBook = new Book(null, "BookTitle_10500", TestUtils.getDbAuthors().get(0),
                 List.of(TestUtils.getDbGenres().get(0), TestUtils.getDbGenres().get(2)));
-        var returnedBook = repository.save(expectedBook);
+        var returnedBook = repository.save(expectedBook).block();
         assertThat(returnedBook).isNotNull()
                 .matches(book -> !book.getId().isBlank())
                 .usingRecursiveComparison().ignoringExpectedNullFields().isEqualTo(expectedBook);
 
-        assertThat(repository.findById(returnedBook.getId()))
-                .isPresent()
-                .get()
+        assertThat(repository.findById(returnedBook.getId()).block())
+                .isNotNull()
                 .isEqualTo(returnedBook);
     }
 
@@ -92,24 +91,22 @@ class BookRepositoryTest {
         var expectedBook = new Book("b1", "BookTitle_10500", TestUtils.getDbAuthors().get(2),
                 List.of(TestUtils.getDbGenres().get(4), TestUtils.getDbGenres().get(5)));
 
-        var actualBook = repository.findById(expectedBook.getId());
+        var actualBook = repository.findById(expectedBook.getId()).block();
         assertThat(actualBook)
-                .isPresent()
-                .get()
+                .isNotNull()
                 .usingRecursiveComparison()
                 .ignoringExpectedNullFields()
                 .isNotEqualTo(expectedBook);
 
-        var returnedBook = repository.save(expectedBook);
+        var returnedBook = repository.save(expectedBook).block();
         assertThat(returnedBook).isNotNull()
                 .matches(book -> !book.getId().isBlank())
                 .usingRecursiveComparison()
                 .ignoringExpectedNullFields()
                 .isEqualTo(expectedBook);
 
-        assertThat(repository.findById(returnedBook.getId()))
-                .isPresent()
-                .get()
+        assertThat(repository.findById(returnedBook.getId()).block())
+                .isNotNull()
                 .usingRecursiveComparison()
                 .ignoringExpectedNullFields()
                 .isEqualTo(returnedBook);
@@ -118,9 +115,9 @@ class BookRepositoryTest {
     @DisplayName("должен удалять книгу по id ")
     @Test
     void shouldDeleteBook() {
-        assertThat(repository.findById("b1")).isPresent();
-        repository.deleteById("b1");
-        assertThat(repository.findById("b1")).isEmpty();
+        assertThat(repository.findById("b1").block()).isNotNull();
+        repository.deleteById("b1").block();
+        assertThat(repository.findById("b1").block()).isNull();
     }
 
 }

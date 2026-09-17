@@ -23,9 +23,9 @@ public class CommentsChangeUnit {
 
     @Execution
     public void execute() {
-        var book1 = bookRepository.findById("b1").orElseThrow();
-        var book2 = bookRepository.findById("b2").orElseThrow();
-        var book3 = bookRepository.findById("b3").orElseThrow();
+        var book1 = bookRepository.findById("b1").block();
+        var book2 = bookRepository.findById("b2").block();
+        var book3 = bookRepository.findById("b3").block();
 
         commentRepository.saveAll(List.of(
                 new Comment("c1", "Comment_1", book1),
@@ -34,7 +34,7 @@ public class CommentsChangeUnit {
                 new Comment("c4", "Comment_4", book3),
                 new Comment("c5", "Comment_5", book3),
                 new Comment("c6", "Comment_6", book3)
-        ));
+        )).collectList().block();
     }
 
     @RollbackExecution

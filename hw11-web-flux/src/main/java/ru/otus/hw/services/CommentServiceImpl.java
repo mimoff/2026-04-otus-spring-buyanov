@@ -2,14 +2,14 @@ package ru.otus.hw.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import ru.otus.hw.dto.CommentDto;
+import ru.otus.hw.dto.CommentUpdateDto;
 import ru.otus.hw.exceptions.EntityNotFoundException;
 import ru.otus.hw.models.Comment;
 import ru.otus.hw.repositories.BookRepository;
 import ru.otus.hw.repositories.CommentRepository;
-
-import java.util.List;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -19,66 +19,49 @@ public class CommentServiceImpl implements CommentService {
     private final BookRepository bookRepository;
 
     @Override
-    @Transactional(readOnly = true)
-    public Optional<Comment> findById(String id) {
-        var comment = commentRepository.findById(id);
-
-        if (!comment.isEmpty()) {
-            comment.get().getBook().getAuthor().getFullName();
-            comment.get().getBook().getGenres().size();
-        }
-
-        return comment;
+    public Flux<CommentDto> findAll() {
+        return commentRepository.findAll()
+                .map(CommentDto::fromDomainObject);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Comment> findByBookId(String bookId) {
-        var comments = commentRepository.findAllByBookId(bookId);
-
-        for (var comment : comments) {
-            comment.getBook().getAuthor().getFullName();
-            comment.getBook().getGenres().size();
-        }
-
-        return comments;
+    public Mono<CommentDto> findById(String id) {
+        return commentRepository.findById(id)
+                .switchIfEmpty(Mono.error(() -> new EntityNotFoundException("Comment with id %s not found"
+                        .formatted(id))))
+                .map(CommentDto::fromDomainObject);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Comment> findAll() {
-        var comments = commentRepository.findAll();
-
-        for (var comment : comments) {
-            comment.getBook().getAuthor().getFullName();
-            comment.getBook().getGenres().size();
-        }
-
-        return comments;
+    public Flux<CommentDto> findAllByBookId(String bookId) {
+        return commentRepository.findAllByBookId(bookId)
+                .map(CommentDto::fromDomainObject);
     }
 
     @Override
-    @Transactional
-    public Comment insert(String text, String bookId) {
-        return save(null, text, bookId);
+    public Mono<CommentDto> insert(CommentUpdateDto commentUpdateDto) {
+        return save(null, commentUpdateDto.getText(), commentUpdateDto.getBookId());
     }
 
     @Override
-    @Transactional
-    public Comment update(String id, String text, String bookId) {
-        return save(id, text, bookId);
+    public Mono<CommentDto> update(CommentUpdateDto commentUpdateDto) {
+        return save(commentUpdateDto.getId(), commentUpdateDto.getText(), commentUpdateDto.getBookId());
     }
 
-    private Comment save(String id, String text, String bookId) {
-        var book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new EntityNotFoundException("Book with id %s not found".formatted(bookId)));
+    private Mono<CommentDto> save(String id, String text, String bookId) {
+        return bookRepository.findById(bookId)
+                .switchIfEmpty(Mono.error(() -> new EntityNotFoundException(
+                        "Book with id %s not found".formatted(bookId))))
+                .flatMap(book -> {
+                    var comment = new Comment(id, text, book);
 
-        Comment comment = new Comment(id, text, book);
-        return commentRepository.save(comment);
+                    return commentRepository.save(comment);
+                })
+                .map(CommentDto::fromDomainObject);
     }
 
     @Override
-    public void deleteById(String id) {
-        commentRepository.deleteById(id);
+    public Mono<Void> deleteById(String id) {
+        return commentRepository.deleteById(id);
     }
 }

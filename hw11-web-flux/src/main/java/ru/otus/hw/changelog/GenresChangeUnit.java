@@ -26,7 +26,7 @@ public class GenresChangeUnit {
                 new Genre("g4", "Genre_4"),
                 new Genre("g5", "Genre_5"),
                 new Genre("g6", "Genre_6")
-        ));
+        )).collectList().block();
     }
 
     @RollbackExecution
