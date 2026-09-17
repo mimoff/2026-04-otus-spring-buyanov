@@ -1,0 +1,54 @@
+<h2 mat-dialog-title>
+  {{ data.mode === 'add' ? 'Добавить книгу' : 'Редактировать книгу' }}
+</h2>
+<mat-dialog-content>
+  <form [formGroup]="form">
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>Название книги</mat-label>
+      <input matInput formControlName="title" placeholder="Введите название">
+      @if (form.get('title')?.hasError('required')) {
+      <mat-error>
+        Название обязательно
+      </mat-error>
+      }
+      @if (form.get('title')?.hasError('minlength')) {
+      <mat-error>
+        Минимум 2 символа
+      </mat-error>
+      }
+    </mat-form-field>
+
+    <!-- Автор -->
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>Автор</mat-label>
+      <mat-select formControlName="author" [compareWith]="compareAuthors">
+        @for (author of authors; track author) {
+          <mat-option [value]="author">{{author.fullName}}</mat-option>
+        }
+      </mat-select>
+      @if (form.get('author')?.hasError('required')) {
+        <mat-error>Выберите автора</mat-error>
+      }
+    </mat-form-field>
+
+    <!-- Жанры (множественный выбор) -->
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>Жанры</mat-label>
+      <mat-select formControlName="genres" multiple [compareWith]="compareGenres">
+        @for (genre of genres; track genre) {
+          <mat-option [value]="genre">{{genre.name}}</mat-option>
+        }
+      </mat-select>
+      @if (form.get('genres')?.hasError('required')) {
+        <mat-error>Выберите хотя бы один жанр</mat-error>
+      }
+    </mat-form-field>
+
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Отмена</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+    {{ data.mode === 'add' ? 'Добавить' : 'Сохранить' }}
+  </button>
+</mat-dialog-actions>

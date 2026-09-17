@@ -22,5 +22,6 @@
         <module>hw09-spring-mvc</module>
         <module>hw10-web-rest</module>
         <module>hw11-web-flux</module>
+        <module>hw12-spring-sec</module>
     </modules>
 </project>
