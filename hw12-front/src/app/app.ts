@@ -1,27 +1,36 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { AuthorListComponent } from './components/author-list/author-list.component';
-import { MatTab, MatTabGroup } from '@angular/material/tabs';
-import {NavigationComponent} from './components/navigation/navigation.component';
-import { BookListComponent } from './components/book-list/book-list.component';
-import { GenreListComponent } from './components/genre-list/genre-list.component';
-import { CommentListComponent } from './components/comment-list/comment-list.component';
+import { Router, RouterOutlet } from '@angular/router';
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatIcon } from '@angular/material/icon';
+import { MatIconButton } from '@angular/material/button';
+import { Observable } from 'rxjs';
+import { AuthService } from './services/auth.service';
+import { User } from './models/user.model';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
-  imports: [
-    RouterOutlet,
-    AuthorListComponent,
-    MatTabGroup,
-    MatTab,
-    NavigationComponent,
-    BookListComponent,
-    GenreListComponent,
-    CommentListComponent,
-  ],
+  imports: [RouterOutlet, MatToolbar, MatIcon, MatIconButton, AsyncPipe],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
 })
 export class App {
-  protected readonly title = signal('hw10-front');
+  protected readonly title = signal('hw12-front');
+  currentUser$: Observable<User | null>;
+  isAuthenticated$: Observable<boolean>;
+
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+  ) {
+    this.currentUser$ = this.authService.currentUser$;
+    this.isAuthenticated$ = this.authService.isAuthenticated$;
+  }
+
+  ngOnInit(): void {}
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
 }
