@@ -23,7 +23,7 @@ public class AuthorsChangeUnit {
                 new Author("a1", "Author_1"),
                 new Author("a2", "Author_2"),
                 new Author("a3", "Author_3")
-        ));
+        )).collectList().block();
     }
 
     @RollbackExecution

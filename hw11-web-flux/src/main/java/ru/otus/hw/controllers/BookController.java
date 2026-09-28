@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.otus.hw.dto.BookDto;
 import ru.otus.hw.dto.BookUpdateDto;
 import ru.otus.hw.services.BookService;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -28,35 +28,35 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping
-    public List<BookDto> findAll()  {
+    public Flux<BookDto> findAll()  {
         return bookService.findAll();
     }
 
     @GetMapping("/{id}")
-    public BookDto findById(@PathVariable Long id) {
+    public Mono<BookDto> findById(@PathVariable String id) {
         return bookService.findById(id);
     }
 
     @PostMapping
-    public ResponseEntity<BookDto> createBook(@Valid @RequestBody BookUpdateDto bookUpdateDto) {
-        var newBook = bookService.insert(bookUpdateDto);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(newBook);
+    public Mono<ResponseEntity<BookDto>> createBook(@Valid @RequestBody BookUpdateDto bookUpdateDto) {
+        return bookService.insert(bookUpdateDto).map(
+                newBook -> ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(newBook)
+        );
     }
 
     @PutMapping("/{id}")
-    public BookDto saveBook(@PathVariable Long id, @Valid @RequestBody BookUpdateDto bookUpdateDto) {
+    public Mono<BookDto> saveBook(@PathVariable String id, @Valid @RequestBody BookUpdateDto bookUpdateDto) {
         bookUpdateDto.setId(id);
 
         return bookService.update(bookUpdateDto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
-        bookService.deleteById(id);
-
-        return ResponseEntity.noContent().build();
+    public Mono<ResponseEntity<Void>> deleteBook(@PathVariable String id) {
+        return bookService.deleteById(id)
+                .thenReturn(ResponseEntity.noContent().build());
     }
 }
 

@@ -43,7 +43,7 @@ class GenreRepositoryTest {
     @DisplayName("должен загружать список всех жанров")
     @Test
     void shouldReturnCorrectGenresList() {
-        var actualGenres = repository.findAll();
+        var actualGenres = repository.findAll().collectList().block();
         var expectedGenres = TestUtils.getDbGenres();
 
         assertThat(actualGenres).containsExactlyElementsOf(expectedGenres);
@@ -57,7 +57,7 @@ class GenreRepositoryTest {
         var setOfIds = expectedGenres.stream()
                 .map(Genre::getId)
                 .collect(Collectors.toSet());
-        var actualGenres = repository.findAllByIds(setOfIds);
+        var actualGenres = repository.findAllById(setOfIds).collectList().block();
 
         assertThat(actualGenres).containsExactlyElementsOf(expectedGenres);
         actualGenres.forEach(System.out::println);
@@ -68,7 +68,7 @@ class GenreRepositoryTest {
     @MethodSource("ru.otus.hw.TestUtils#getDbGenres")
     void shouldReturnCorrectGenreById(Genre expectedGenre) {
         var setOfIds = Set.of(expectedGenre.getId());
-        var actualGenres = repository.findAllByIds(setOfIds);
+        var actualGenres = repository.findAllById(setOfIds).collectList().block();
         var expectedGenres = List.of(expectedGenre);
 
         assertThat(actualGenres).containsExactlyElementsOf(expectedGenres);

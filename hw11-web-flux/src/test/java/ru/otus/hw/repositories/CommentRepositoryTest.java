@@ -43,9 +43,8 @@ class CommentRepositoryTest {
     @ParameterizedTest
     @MethodSource("ru.otus.hw.TestUtils#getDbComments")
     void shouldReturnCorrectCommentById(Comment expectedComment) {
-        var actualBook = repository.findById(expectedComment.getId());
-        assertThat(actualBook).isPresent()
-                .get()
+        var actualBook = repository.findById(expectedComment.getId()).block();
+        assertThat(actualBook)
                 .isEqualTo(expectedComment);
     }
 
@@ -53,7 +52,7 @@ class CommentRepositoryTest {
     @ParameterizedTest
     @MethodSource("ru.otus.hw.TestUtils#getDbBooks")
     void shouldReturnCorrectCommentByBookId(Book expectedBook) {
-        var actualComments = repository.findAllByBookId(expectedBook.getId());
+        var actualComments = repository.findAllByBookId(expectedBook.getId()).collectList().block();
         var expectedComments = TestUtils.getDbComments().stream()
                 .filter(c -> c.getBook().getId().equals(expectedBook.getId()))
                 .collect(Collectors.toList());
@@ -66,14 +65,13 @@ class CommentRepositoryTest {
     @Test
     void shouldSaveNewComment() {
         var expectedComment = new Comment(null, "CommentTitle_10500", TestUtils.getDbBooks().get(2));
-        var returnedComment = repository.save(expectedComment);
+        var returnedComment = repository.save(expectedComment).block();
         assertThat(returnedComment).isNotNull()
                 .matches(comment -> !comment.getId().isBlank())
                 .usingRecursiveComparison().ignoringExpectedNullFields().isEqualTo(expectedComment);
 
-        assertThat(repository.findById(returnedComment.getId()))
-                .isPresent()
-                .get()
+        assertThat(repository.findById(returnedComment.getId()).block())
+                .isNotNull()
                 .isEqualTo(returnedComment);
     }
 
@@ -82,23 +80,21 @@ class CommentRepositoryTest {
     void shouldSaveUpdatedComment() {
         var expectedComment = new Comment("c1", "CommentTitle_10500", TestUtils.getDbBooks().get(2));
 
-        assertThat(repository.findById(expectedComment.getId()))
-                .isPresent()
-                .get()
+        assertThat(repository.findById(expectedComment.getId()).block())
+                .isNotNull()
                 .usingRecursiveComparison()
                 .ignoringExpectedNullFields()
                 .isNotEqualTo(expectedComment);
 
-        var returnedComment = repository.save(expectedComment);
+        var returnedComment = repository.save(expectedComment).block();
         assertThat(returnedComment).isNotNull()
                 .matches(comment -> !comment.getId().isBlank())
                 .usingRecursiveComparison()
                 .ignoringExpectedNullFields()
                 .isEqualTo(expectedComment);
 
-        assertThat(repository.findById(returnedComment.getId()))
-                .isPresent()
-                .get()
+        assertThat(repository.findById(returnedComment.getId()).block())
+                .isNotNull()
                 .usingRecursiveComparison()
                 .ignoringExpectedNullFields()
                 .isEqualTo(returnedComment);
@@ -107,9 +103,9 @@ class CommentRepositoryTest {
     @DisplayName("должен удалять комментарий по id ")
     @Test
     void shouldDeleteComment() {
-        assertThat(repository.findById("c1")).isPresent();
-        repository.deleteById("c1");
-        assertThat(repository.findById("c1")).isEmpty();
+        assertThat(repository.findById("c1").block()).isNotNull();
+        repository.deleteById("c1").block();
+        assertThat(repository.findById("c1").block()).isNull();
     }
 
  }

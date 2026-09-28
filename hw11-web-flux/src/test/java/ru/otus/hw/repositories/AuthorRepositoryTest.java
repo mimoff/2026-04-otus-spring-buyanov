@@ -39,7 +39,7 @@ class AuthorRepositoryTest {
     @DisplayName("должен загружать список всех авторов")
     @Test
     void shouldReturnCorrectAuthorsList() {
-        var actualAuthors = repository.findAll();
+        var actualAuthors = repository.findAll().collectList().block();
         var expectedAuthors = TestUtils.getDbAuthors();
 
         assertThat(actualAuthors).containsExactlyElementsOf(expectedAuthors);
@@ -50,11 +50,9 @@ class AuthorRepositoryTest {
     @ParameterizedTest
     @MethodSource("ru.otus.hw.TestUtils#getDbAuthors")
     void shouldReturnCorrectAuthorById(Author expectedAuthor) {
-        var actualAuthor = repository.findById(expectedAuthor.getId());
+        var actualAuthor = repository.findById(expectedAuthor.getId()).block();
 
         assertThat(actualAuthor)
-                .isPresent()
-                .get()
                 .isEqualTo(expectedAuthor);
         System.out.println(actualAuthor);
     }

@@ -1,6 +1,5 @@
 package ru.otus.hw.controllers;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -19,25 +18,25 @@ public class RestExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiErrorResponse handleEntityNotFound(EntityNotFoundException ex, HttpServletRequest request) {
-        return ApiErrorResponse.of(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
+    public ApiErrorResponse handleEntityNotFound(EntityNotFoundException ex) {
+        return ApiErrorResponse.of(HttpStatus.NOT_FOUND, ex.getMessage(), "");
     }
 
     @ExceptionHandler(IllegalStateException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiErrorResponse handleIllegalState(IllegalStateException ex, HttpServletRequest request) {
-        return ApiErrorResponse.of(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI());
+    public ApiErrorResponse handleIllegalState(IllegalStateException ex) {
+        return ApiErrorResponse.of(HttpStatus.CONFLICT, ex.getMessage(), "");
     }
 
     @ExceptionHandler({IllegalArgumentException.class, HttpMessageNotReadableException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleBadRequest(Exception ex, HttpServletRequest request) {
-        return ApiErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
+    public ApiErrorResponse handleBadRequest(Exception ex) {
+        return ApiErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage(), "");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
+    public ApiErrorResponse handleValidation(MethodArgumentNotValidException ex) {
         var validationErrors = ex.getBindingResult().getFieldErrors().stream()
                 .collect(Collectors.toMap(
                         RestExceptionHandler::fieldName,
@@ -45,7 +44,7 @@ public class RestExceptionHandler {
                         (first, second) -> first,
                         LinkedHashMap::new
                 ));
-        return ApiErrorResponse.of(HttpStatus.BAD_REQUEST, "Validation failed", request.getRequestURI(),
+        return ApiErrorResponse.of(HttpStatus.BAD_REQUEST, "Validation failed", "",
                 validationErrors);
     }
 
