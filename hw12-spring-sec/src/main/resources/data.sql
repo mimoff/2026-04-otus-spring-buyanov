@@ -18,5 +18,6 @@ values (1, 'Comment_1'),
        (2, 'Comment_2'),   (2, 'Comment_3'),
        (3, 'Comment_4'),   (3, 'Comment_5'),   (3, 'Comment_6');
 
-insert into users(username, password)
-values ('admin', 'admin'), ('user', 'user');
+insert into users(username, password, role)
+values ('admin', 'admin', 'ROLE_ADMIN'),
+       ('user', 'user', 'ROLE_USER');

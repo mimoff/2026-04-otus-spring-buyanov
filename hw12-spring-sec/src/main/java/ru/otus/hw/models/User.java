@@ -24,9 +24,12 @@ public class User {
     @EqualsAndHashCode.Include
     private long id;
 
-    @Column(name = "username")
+    @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(name = "password")
+    @Column(nullable = false)
     private String password;
+
+    @Column
+    private String role;
 }
