@@ -1,6 +1,8 @@
 package ru.otus.hw.services;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PostFilter;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.otus.hw.dto.BookDto;
@@ -28,6 +30,8 @@ public class BookServiceImpl implements BookService {
 
     @Override
     @Transactional(readOnly = true)
+//    @PreAuthorize("hasRole('ADMIN') or hasPermission(#id, 'ru.otus.hw.models.Book', 'READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public BookDto findById(long id) {
         var book = bookRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Book with id %d not found".formatted(id)));
@@ -36,6 +40,8 @@ public class BookServiceImpl implements BookService {
 
     @Override
     @Transactional(readOnly = true)
+//    @PostFilter("hasRole('ADMIN') or hasPermission(filterObject.id, 'ru.otus.hw.models.Book', 'READ')")
+    @PreAuthorize("hasRole('ADMIN')")
     public List<BookDto> findAll() {
         var books = bookRepository.findAll().stream()
                 .map(BookDto::fromDomainObject).collect(Collectors.toList());
