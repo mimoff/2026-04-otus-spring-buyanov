@@ -1,12 +1,15 @@
 package ru.otus.hw.services;
 
-import org.springframework.security.acls.domain.GrantedAuthoritySid;
 import org.springframework.security.acls.domain.ObjectIdentityImpl;
 import org.springframework.security.acls.domain.PrincipalSid;
-import org.springframework.security.acls.model.*;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.acls.model.MutableAcl;
+import org.springframework.security.acls.model.MutableAclService;
+import org.springframework.security.acls.model.NotFoundException;
+import org.springframework.security.acls.model.Permission;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.io.Serializable;
 
 @Service
 public class AclServiceWrapperServiceImpl implements AclServiceWrapperService {
@@ -18,16 +21,28 @@ public class AclServiceWrapperServiceImpl implements AclServiceWrapperService {
     }
 
     @Override
-    public void createPermission(Object object, Permission permission) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final Sid owner = new PrincipalSid(authentication);
-        ObjectIdentity oid = new ObjectIdentityImpl(object);
+    public void grantPermissions(Object domainObject, Permission... permissions) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        var owner = new PrincipalSid(authentication);
+        var objectIdentity = new ObjectIdentityImpl(domainObject);
 
-        final Sid admin = new GrantedAuthoritySid("ROLE_EDITOR");
+        MutableAcl acl;
+        try {
+            acl = (MutableAcl) mutableAclService.readAclById(objectIdentity);
+        } catch (NotFoundException e) {
+            acl = mutableAclService.createAcl(objectIdentity);
+        }
 
-        MutableAcl acl = mutableAclService.createAcl(oid);
-        acl.insertAce(acl.getEntries().size(), permission, owner, true);
-        acl.insertAce(acl.getEntries().size(), permission, admin, true);
+        for (var permission : permissions) {
+            acl.insertAce(acl.getEntries().size(), permission, owner, true);
+        }
+
         mutableAclService.updateAcl(acl);
     }
+
+    @Override
+    public void deleteAcl(Class<?> domainType, Serializable id) {
+        mutableAclService.deleteAcl(new ObjectIdentityImpl(domainType, id), true);
+    }
+
 }
