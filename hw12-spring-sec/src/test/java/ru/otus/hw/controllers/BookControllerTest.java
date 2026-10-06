@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -17,6 +18,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -25,8 +27,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@DisplayName("BookController должен")
+@DisplayName("BookController c аутентификацией должен")
 @WebMvcTest(BookController.class)
+@WithMockUser
 class BookControllerTest {
 
     @Autowired
@@ -83,6 +86,7 @@ class BookControllerTest {
         when(bookService.insert(bookUpdateDto)).thenReturn(expectedBook);
 
         mockMvc.perform(post("/api/books")
+                        .with(csrf())
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bookUpdateDto)))
                 .andExpect(status().isCreated())
@@ -105,6 +109,7 @@ class BookControllerTest {
                 .thenReturn(expectedBook);
 
         mockMvc.perform(put("/api/books/{id}", bookUpdateDto.getId())
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bookUpdateDto)))
                 .andExpect(status().isOk())
@@ -124,7 +129,7 @@ class BookControllerTest {
         var bookId = 1l;
 //        when(bookService.findById(bookId))
 //                .thenReturn(Optional.of(TestUtils.getDbBooks().get(0)));
-        mockMvc.perform(delete("/api/books/{id}", bookId))
+        mockMvc.perform(delete("/api/books/{id}", bookId).with(csrf()))
                 .andExpect(status().isNoContent());
 
         verify(bookService).deleteById(bookId);
@@ -136,7 +141,7 @@ class BookControllerTest {
         doThrow(new EntityNotFoundException("Book with id 1000 not found"))
             .when(bookService).deleteById(1000L);
 
-        mockMvc.perform(delete("/api/books/1000"))
+        mockMvc.perform(delete("/api/books/1000").with(csrf()))
                 .andExpect(status().isNotFound());
     }
 }

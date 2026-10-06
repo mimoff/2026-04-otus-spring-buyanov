@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "hw10-front": {
+    "hw12-front": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -60,10 +60,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "hw10-front:build:production"
+              "buildTarget": "hw12-front:build:production"
             },
             "development": {
-              "buildTarget": "hw10-front:build:development"
+              "buildTarget": "hw12-front:build:development"
             }
           },
           "defaultConfiguration": "development"
