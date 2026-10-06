@@ -45,7 +45,7 @@ public class AclConfig {
 
     @Bean
     public AclAuthorizationStrategy aclAuthorizationStrategy() {
-        return new AclAuthorizationStrategyImpl(new SimpleGrantedAuthority("ROLE_EDITOR"));
+        return new AclAuthorizationStrategyImpl(new SimpleGrantedAuthority("USER"));
     }
 
     @Bean
