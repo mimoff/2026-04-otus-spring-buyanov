@@ -1,18 +1,20 @@
-<!--<app-navigation></app-navigation>-->
+@if (isAuthenticated$ | async) {
+<mat-toolbar color="primary">
+  <mat-icon class="toolbar-icon">menu_book</mat-icon>
+  <span class="toolbar-title">Библиотека</span>
+  <span class="spacer"></span>
+<!--
+  @if ((currentUser$ | async) as user) {
+    <span class="user-info">
+    <mat-icon>account_circle</mat-icon>
+      {{ user.fullName || user.username }}
+  </span>
+  }
+-->
+  <button mat-icon-button (click)="logout()" matTooltip="Выйти">
+    <mat-icon>logout</mat-icon>
+  </button>
+</mat-toolbar>
+}
 
-<mat-tab-group>
-  <mat-tab label="Books">
-    <app-book-list></app-book-list>
-  </mat-tab>
-  <mat-tab label="Authors">
-    <app-author-list></app-author-list>
-  </mat-tab>
-  <mat-tab label="Genres">
-    <app-genre-list></app-genre-list>
-  </mat-tab>
-  <mat-tab label="Comments">
-    <app-comment-list></app-comment-list>
-  </mat-tab>
-</mat-tab-group>
-
-<!--router-outlet /-->
+<router-outlet></router-outlet>
