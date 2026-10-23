@@ -7,6 +7,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.otus.hw.TestUtils;
+import ru.otus.hw.actuator.ApplicationMetrics;
 import ru.otus.hw.dto.BookDto;
 import ru.otus.hw.exceptions.EntityNotFoundException;
 import ru.otus.hw.models.Genre;
@@ -61,6 +62,9 @@ class BookControllerTest {
 
     @MockitoBean
     private CommentService commentService;
+
+    @MockitoBean
+    private ApplicationMetrics applicationMetrics;
 
     @Test
     @DisplayName("вернуть страницу с книгами")
