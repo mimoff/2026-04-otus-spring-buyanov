@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import ru.otus.hw.actuator.ApplicationMetrics;
 import ru.otus.hw.dto.AuthorDto;
 import ru.otus.hw.services.AuthorService;
 
@@ -17,8 +18,12 @@ public class AuthorController {
 
     private final AuthorService authorService;
 
+    private final ApplicationMetrics applicationMetrics;
+
     @GetMapping("/authors")
     public String listPage(Model model) {
+        applicationMetrics.userRequest("author", "findAll");
+
         List<AuthorDto> authors = authorService.findAll().stream()
                 .map(AuthorDto::fromDomainObject).toList();
         model.addAttribute("authors", authors);
