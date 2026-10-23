@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import ru.otus.hw.actuator.ApplicationMetrics;
 import ru.otus.hw.dto.BookDto;
 import ru.otus.hw.dto.BookUpdateDto;
 import ru.otus.hw.dto.CommentDto;
@@ -35,8 +36,12 @@ public class BookController {
 
     private final CommentService commentService;
 
+    private final ApplicationMetrics applicationMetrics;
+
     @GetMapping("/books")
     public String listBooks(Model model) {
+        applicationMetrics.userRequest("book", "findAll");
+
         List<BookDto> books = bookService.findAll().stream()
                 .map(BookDto::fromDomainObject).toList();
         model.addAttribute("books", books);
@@ -61,12 +66,16 @@ public class BookController {
             return "book-edit";
         }
 
+        applicationMetrics.userRequest("book", "insert");
+
         bookService.insert(bookUpdateDto.getTitle(), bookUpdateDto.getAuthorId(), bookUpdateDto.getGenreIds());
         return "redirect:/books";
     }
 
     @GetMapping("/books/{id}")
     public String viewBook(@PathVariable long id, Model model) {
+        applicationMetrics.userRequest("book", "view");
+
         BookDto book = bookService.findById(id)
                 .map(BookDto::fromDomainObject)
                 .orElseThrow(() -> new EntityNotFoundException("book id=%d not found".formatted(id)));
@@ -80,6 +89,8 @@ public class BookController {
 
     @GetMapping("/books/{id}/edit")
     public String editBook(@PathVariable long id, Model model) {
+        applicationMetrics.userRequest("book", "edit");
+
         BookUpdateDto book = bookService.findById(id)
                 .map(BookUpdateDto::fromDomainObject)
                 .orElseThrow(() -> new EntityNotFoundException("book id=%d not found".formatted(id)));
@@ -96,6 +107,8 @@ public class BookController {
             return "book-edit";
         }
 
+        applicationMetrics.userRequest("book", "update");
+
         bookService.update(bookUpdateDto.getId(), bookUpdateDto.getTitle(),
                 bookUpdateDto.getAuthorId(), bookUpdateDto.getGenreIds());
         return "redirect:/books";
@@ -103,6 +116,8 @@ public class BookController {
 
     @PostMapping("/books/{id}/delete")
     public String deleteBook(@PathVariable long id) {
+        applicationMetrics.userRequest("book", "delete");
+
         bookService.deleteById(id);
         return "redirect:/books";
     }
