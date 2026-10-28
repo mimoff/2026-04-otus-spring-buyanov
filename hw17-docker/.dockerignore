@@ -1,0 +1,12 @@
+.git
+.gitignore
+.idea
+*.iml
+.DS_Store
+target
+build
+out
+docs
+*.md
+*.log
+logs
